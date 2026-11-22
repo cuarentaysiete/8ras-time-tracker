@@ -2,6 +2,16 @@
 
 All notable changes to 8ras Time Tracker are documented here.
 
+## [2.6.1] - 2025-11-22
+
+### Fixed
+- **Timeline segments now render correctly**: fixed a bug in `dayTimelineSegments()` where grey segments (idle workday hours) were not being calculated correctly, and work segments (green/orange) were being duplicated. Now the function correctly:  
+  1. Splits raw work fragments into in/out parts (green/orange)
+  2. Calculates grey segments for workday hours not worked
+  3. Combines all segments and sorts them by start time
+  4. Renders them positioned by real time (24h scale)
+- **Grey segments no longer centered**: the inline `left` style is now set correctly for all segments (grey, green, orange), so they appear at the right position on the timeline.
+
 ## [2.6.0] - 2025-11-22
 
 ### Added

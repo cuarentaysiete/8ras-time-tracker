@@ -1,7 +1,7 @@
 'use strict';
 
 /* ════════════════════════════════════════════════════════════════════
-   8ras Time Tracker — v2.6.0
+   8ras Time Tracker — v2.6.1
    Adobe Photoshop UXP panel plugin. Classic script (NO ES modules).
 
    All UXP API calls verified against the official reference
@@ -14,10 +14,10 @@
      file.read()                            → string (utf8 default)
      file.write(data[, {append}])           → replaces unless append
    ══════════════════════════════════════════════════════════════════ */
-console.log('[8ras v2.6.0] main.js loaded');
+console.log('[8ras v2.6.1] main.js loaded');
 
 var NAME = '8ras time tracker';
-var VERSION = '2.6.0';
+var VERSION = '2.6.1';
 var TOKEN_KEY = 'eighras-tracker-token';   // persistent-token key in storage.local
 var TOKEN_FILE = '.tracker-token.json';    // human-readable marker inside the data folder
 var METRICS_FILE = 'metrics.json';
@@ -516,50 +516,64 @@ function collectDayFragments(days, nowMs) {
    'idle' (grey, workday hours not worked). Weekends: no grey, only orange for work. */
 function dayTimelineSegments(rawFrags, dayStartMs, isWeekend, workStartMin, workEndMin) {
   var segments = [];
-  if (isWeekend) {
-    // Weekends: no workday, so no grey segments. Only orange for work.
-    for (var i = 0; i < rawFrags.length; i++) {
-      segments.push({ aMs: rawFrags[i].aMs, bMs: rawFrags[i].bMs, color: 'out' });
-    }
-    return segments;
-  }
-  // Weekdays: workday is [workStartMin, workEndMin]
-  var wsAbs = dayStartMs + workStartMin * 60000;
-  var weAbs = dayStartMs + workEndMin * 60000;
-  // First, collect all work fragments and split them into in/out parts
+  var wsAbs = dayStartMs + workStartMin * 60000; // workday start (absolute ms)
+  var weAbs = dayStartMs + workEndMin * 60000;   // workday end (absolute ms)
+  
+  // Step 1: Split raw work fragments into in/out parts
   var workParts = [];
-  for (var j = 0; j < rawFrags.length; j++) {
-    var f = rawFrags[j];
-    // in-workday part
-    var inA = Math.max(f.aMs, wsAbs);
-    var inB = Math.min(f.bMs, weAbs);
-    if (inB > inA) workParts.push({ aMs: inA, bMs: inB, color: 'in' });
-    // out-workday parts
-    if (f.aMs < wsAbs) workParts.push({ aMs: f.aMs, bMs: Math.min(f.bMs, wsAbs), color: 'out' });
-    if (f.bMs > weAbs) workParts.push({ aMs: Math.max(f.aMs, weAbs), bMs: f.bMs, color: 'out' });
+  for (var i = 0; i < rawFrags.length; i++) {
+    var f = rawFrags[i];
+    if (isWeekend) {
+      // Weekends: all work is orange
+      workParts.push({ aMs: f.aMs, bMs: f.bMs, color: 'out' });
+    } else {
+      // Weekdays: split at workday boundaries
+      // in-workday part
+      var inA = Math.max(f.aMs, wsAbs);
+      var inB = Math.min(f.bMs, weAbs);
+      if (inB > inA) workParts.push({ aMs: inA, bMs: inB, color: 'in' });
+      // out-workday parts (before and after workday)
+      if (f.aMs < wsAbs && f.bMs > f.aMs) workParts.push({ aMs: f.aMs, bMs: Math.min(f.bMs, wsAbs), color: 'out' });
+      if (f.bMs > weAbs && f.aMs < f.bMs) workParts.push({ aMs: Math.max(f.aMs, weAbs), bMs: f.bMs, color: 'out' });
+    }
   }
-  // Sort workParts by aMs
+  
+  // Step 2: Sort workParts by start time
   workParts.sort(function (a, b) { return a.aMs - b.aMs; });
-  // Now, add grey segments for workday hours not covered by workParts
-  // Start with the full workday as grey
-  var greyStart = wsAbs;
-  for (var k = 0; k < workParts.length; k++) {
-    var wp = workParts[k];
-    // Add grey from greyStart to wp.aMs (if within workday)
-    var gA = Math.max(greyStart, wsAbs);
-    var gB = Math.min(wp.aMs, weAbs);
-    if (gB > gA) segments.push({ aMs: gA, bMs: gB, color: 'idle' });
-    // Add the work part
-    segments.push(wp);
-    // Update greyStart
-    greyStart = Math.max(greyStart, wp.bMs);
+  
+  // Step 3: Add grey segments for workday hours not covered by workParts
+  if (!isWeekend) {
+    var greyCursor = wsAbs; // start of workday
+    for (var j = 0; j < workParts.length; j++) {
+      var wp = workParts[j];
+      // Only consider work parts that are within or overlap with the workday
+      if (wp.color === 'in') {
+        // This work part is within the workday
+        // Add grey from greyCursor to wp.aMs (if within workday and before work starts)
+        if (wp.aMs > greyCursor && wp.aMs < weAbs) {
+          segments.push({ aMs: greyCursor, bMs: wp.aMs, color: 'idle' });
+        }
+        // Move grey cursor past the work part
+        greyCursor = Math.max(greyCursor, wp.bMs);
+      } else if (wp.color === 'out' && wp.aMs < weAbs && wp.bMs > wsAbs) {
+        // This out-work part overlaps with the workday (shouldn't happen, but handle it)
+        // Actually, out-work parts are outside the workday by definition, so this won't happen
+      }
+    }
+    // Add remaining grey after the last work part (if within workday)
+    if (greyCursor < weAbs) {
+      segments.push({ aMs: greyCursor, bMs: weAbs, color: 'idle' });
+    }
   }
-  // Add remaining grey after the last work part
-  var gA2 = Math.max(greyStart, wsAbs);
-  var gB2 = Math.min(weAbs, weAbs);
-  if (gB2 > gA2) segments.push({ aMs: gA2, bMs: gB2, color: 'idle' });
-  // Sort segments by aMs
+  
+  // Step 4: Add all work parts (in/out)
+  for (var k = 0; k < workParts.length; k++) {
+    segments.push(workParts[k]);
+  }
+  
+  // Step 5: Sort all segments by start time
   segments.sort(function (a, b) { return a.aMs - b.aMs; });
+  
   return segments;
 }
 
