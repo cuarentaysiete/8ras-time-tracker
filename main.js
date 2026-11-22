@@ -1,7 +1,7 @@
 'use strict';
 
 /* ════════════════════════════════════════════════════════════════════
-   8ras Time Tracker — v2.5.2
+   8ras Time Tracker — v2.5.3
    Adobe Photoshop UXP panel plugin. Classic script (NO ES modules).
 
    All UXP API calls verified against the official reference
@@ -14,10 +14,10 @@
      file.read()                            → string (utf8 default)
      file.write(data[, {append}])           → replaces unless append
    ══════════════════════════════════════════════════════════════════ */
-console.log('[8ras v2.5.2] main.js loaded');
+console.log('[8ras v2.5.3] main.js loaded');
 
 var NAME = '8ras time tracker';
-var VERSION = '2.5.2';
+var VERSION = '2.5.3';
 var TOKEN_KEY = 'eighras-tracker-token';   // persistent-token key in storage.local
 var TOKEN_FILE = '.tracker-token.json';    // human-readable marker inside the data folder
 var METRICS_FILE = 'metrics.json';
@@ -511,17 +511,17 @@ function collectDayFragments(days, nowMs) {
   return frags;
 }
 
-/* Contiguous fill for one day's bar, scaled so the busiest day of the week
-   spans the full track (reference look): green = time inside the working
-   window, then orange = time outside it (weekends are fully orange).
-   Returns inner HTML. */
-function barFillsHtml(inSec, outSec, maxSec) {
+/* Contiguous fill for one day's bar, scaled to the full 24h track (86400s):
+   green = time inside the working window, then orange = time outside it.
+   All bars are left-aligned (left:0 by default). */
+function barFillsHtml(inSec, outSec) {
   var tot = inSec + outSec;
-  if (tot <= 0 || maxSec <= 0) return '';
-  var totalPct = (tot / maxSec) * 100;
+  if (tot <= 0) return '';
+  var DAY_SEC = 86400; // 24h in seconds
+  var totalPct = Math.min(100, (tot / DAY_SEC) * 100);
   var inPct = (inSec / tot) * totalPct;
   var outPct = (outSec / tot) * totalPct;
-  var MINW = 1.2;                       /* keep slivers visible */
+  var MINW = 0.5;                       /* keep slivers visible (~45s) */
   if (inPct > 0 && inPct < MINW) inPct = MINW;
   if (outPct > 0 && outPct < MINW) outPct = MINW;
   var html = '';
@@ -531,15 +531,16 @@ function barFillsHtml(inSec, outSec, maxSec) {
 }
 
 /* Grey workday band (weekdays only, dow 0=Mo..4=Fr): shows the configured work hours
-   (e.g. 10:00-18:00) as a left-aligned grey segment, scaled proportionally to the busiest day. */
-function workdayBandHtml(dow, maxSec) {
+   (e.g. 10:00-18:00) as a left-aligned grey segment, scaled to the full 24h track. */
+function workdayBandHtml(dow) {
   if (dow >= 5) return ''; // no band on weekends (Sa=5, Su=6)
   var ws = state.workStart; // minutes from midnight
   var we = state.workEnd;
   if (we <= ws) return ''; // invalid
   var workdaySec = (we - ws) * 60;
-  if (maxSec <= 0 || workdaySec <= 0) return '';
-  var widthPct = Math.min(100, (workdaySec / maxSec) * 100);
+  if (workdaySec <= 0) return '';
+  var DAY_SEC = 86400; // 24h in seconds
+  var widthPct = Math.min(100, (workdaySec / DAY_SEC) * 100);
   return '<span class="band" title="workday ' + hmStr(ws) + '-' + hmStr(we) + '" style="width:' + widthPct.toFixed(2) + '%"></span>';
 }
 
@@ -685,7 +686,7 @@ function render() {
         html += '<div class="weekrows">';
         days.forEach(function (d) {
           html += '<div class="barrow' + (d.today ? ' today' : '') + '" title="' + d.iso + (d.sec >= 1 ? ' — ' + fmtUnits(d.sec, true) : '') + '"><span class="wd">' + d.label + '</span>' +
-                  '<div class="bartrack">' + workdayBandHtml(d.dow, maxSec) + barFillsHtml(d.inSec, d.outSec, maxSec) + '</div>' +
+                  '<div class="bartrack">' + workdayBandHtml(d.dow) + barFillsHtml(d.inSec, d.outSec) + '</div>' +
                   '<span class="wsec' + (d.sec < 1 ? ' zero' : '') + '">' + (d.sec >= 1 ? fmtUnits(d.sec, true) : '&mdash;') + '</span></div>';
         });
         html += '</div><div class="hint" style="margin-top:2px">bars scaled to the busiest day &middot; green inside ' + hmStr(state.workStart) + '-' + hmStr(state.workEnd) + ' &middot; orange outside &middot; weekends always orange</div>';
