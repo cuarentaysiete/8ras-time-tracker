@@ -2,6 +2,17 @@
 
 All notable changes to 8ras Time Tracker are documented here.
 
+## [2.5.1] - 2025-11-22
+
+### Added
+- **Grey workday band**: weekdays (Mo-Fr) now show a grey band (`#565656`) representing the configured work hours (e.g. 10:00-18:00), positioned by real time on the 24h track. Weekends show no band.
+- **Tooltips on bars**: hovering over green/orange bar segments shows the exact time (e.g. "1h 05m").
+- **Enhanced header**: "Total this week -- {total} ({green} / {orange})" with the total in white, and the in/out split in parentheses.
+
+### Changed
+- Bars are now left-aligned (default `left:0`), not centered.
+- Workday band uses real-time positioning (10:00-18:00 = 41.67%-75.00% of the track), not proportional to activity.
+
 ## [2.5.0] - 2025-11-22
 
 ### Added

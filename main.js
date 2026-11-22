@@ -1,7 +1,7 @@
 'use strict';
 
 /* ════════════════════════════════════════════════════════════════════
-   8ras Time Tracker — v2.5.0
+   8ras Time Tracker — v2.5.1
    Adobe Photoshop UXP panel plugin. Classic script (NO ES modules).
 
    All UXP API calls verified against the official reference
@@ -14,10 +14,10 @@
      file.read()                            → string (utf8 default)
      file.write(data[, {append}])           → replaces unless append
    ══════════════════════════════════════════════════════════════════ */
-console.log('[8ras v2.5.0] main.js loaded');
+console.log('[8ras v2.5.1] main.js loaded');
 
 var NAME = '8ras time tracker';
-var VERSION = '2.5.0';
+var VERSION = '2.5.1';
 var TOKEN_KEY = 'eighras-tracker-token';   // persistent-token key in storage.local
 var TOKEN_FILE = '.tracker-token.json';    // human-readable marker inside the data folder
 var METRICS_FILE = 'metrics.json';
@@ -525,9 +525,21 @@ function barFillsHtml(inSec, outSec, maxSec) {
   if (inPct > 0 && inPct < MINW) inPct = MINW;
   if (outPct > 0 && outPct < MINW) outPct = MINW;
   var html = '';
-  if (inPct > 0) html += '<span class="barfill in" style="width:' + inPct.toFixed(2) + '%"></span>';
-  if (outPct > 0) html += '<span class="barfill out" style="left:' + inPct.toFixed(2) + '%;width:' + outPct.toFixed(2) + '%"></span>';
+  if (inPct > 0) html += '<span class="barfill in" title="' + fmtUnits(inSec, true) + '" style="width:' + inPct.toFixed(2) + '%"></span>';
+  if (outPct > 0) html += '<span class="barfill out" title="' + fmtUnits(outSec, true) + '" style="left:' + inPct.toFixed(2) + '%;width:' + outPct.toFixed(2) + '%"></span>';
   return html;
+}
+
+/* Grey workday band (weekdays only, dow 0=Mo..4=Fr): shows the configured work hours
+   (e.g. 10:00-18:00) as a fixed-position grey segment on the 24h track. */
+function workdayBandHtml(dow) {
+  if (dow >= 5) return ''; // no band on weekends (Sa=5, Su=6)
+  var ws = state.workStart; // minutes from midnight
+  var we = state.workEnd;
+  if (we <= ws) return ''; // invalid
+  var leftPct = (ws / 1440) * 100;
+  var widthPct = ((we - ws) / 1440) * 100;
+  return '<span class="band" title="workday ' + hmStr(ws) + '-' + hmStr(we) + '" style="left:' + leftPct.toFixed(2) + '%;width:' + widthPct.toFixed(2) + '%"></span>';
 }
 
 /* Big timer: total tracked time TODAY for the current file (committed sessions
@@ -574,6 +586,7 @@ function weekRows() {
       label: ['Mo','Tu','We','Th','Fr','Sa','Su'][i],
       iso: localISO(d),
       startMs: d.getTime(),
+      dow: i, // 0=Mo..6=Su (index, not JS getDay)
       weekend: i >= 5,
       today: localISO(d) === todayISO(),
       sec: 0, inSec: 0, outSec: 0
@@ -664,14 +677,14 @@ function render() {
     } else if (state.showDash) {
       var maxSec = 0;
       days.forEach(function (d) { if (d.sec > maxSec) maxSec = d.sec; });
-      html += '<div class="card week"><h3>Total this week — <span class="tin">' + fmtUnits(Math.round(state.weekIn), true) + '</span> / <span class="tout">' + fmtUnits(Math.round(state.weekOut), true) + '</span></h3>';
+      html += '<div class="card week"><h3>Total this week — <span class="ttotal">' + fmtUnits(Math.round(state.weekTotal), true) + '</span> (<span class="tin">' + fmtUnits(Math.round(state.weekIn), true) + '</span> / <span class="tout">' + fmtUnits(Math.round(state.weekOut), true) + '</span>)</h3>';
       if (!state.weekProjects.length && state.weekTotal === 0) {
         html += '<p class="dim">No tracked time this week yet.</p>';
       } else {
         html += '<div class="weekrows">';
         days.forEach(function (d) {
           html += '<div class="barrow' + (d.today ? ' today' : '') + '" title="' + d.iso + (d.sec >= 1 ? ' — ' + fmtUnits(d.sec, true) : '') + '"><span class="wd">' + d.label + '</span>' +
-                  '<div class="bartrack">' + barFillsHtml(d.inSec, d.outSec, maxSec) + '</div>' +
+                  '<div class="bartrack">' + workdayBandHtml(d.dow) + barFillsHtml(d.inSec, d.outSec, maxSec) + '</div>' +
                   '<span class="wsec' + (d.sec < 1 ? ' zero' : '') + '">' + (d.sec >= 1 ? fmtUnits(d.sec, true) : '&mdash;') + '</span></div>';
         });
         html += '</div><div class="hint" style="margin-top:2px">bars scaled to the busiest day &middot; green inside ' + hmStr(state.workStart) + '-' + hmStr(state.workEnd) + ' &middot; orange outside &middot; weekends always orange</div>';

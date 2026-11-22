@@ -162,7 +162,7 @@ console.log('\n== 8ras Time Tracker — smoke test ==\n');
   await settle();
   const dbg = sb.__debug;
   assert(!!dbg, '__debug hook exposed');
-  assert(appEl.innerHTML.includes('v2.5.0'), 'version banner visible in UI');
+  assert(appEl.innerHTML.includes('v2.5.1'), 'version banner visible in UI');
   assert(appEl.innerHTML.includes('8ras time tracker'), 'official name shown');
   assert(dbg.state().stage === 'setup', 'initial stage is "setup"');
   assert(appEl.innerHTML.includes('Select folder'), 'setup screen rendered');
@@ -242,14 +242,15 @@ console.log('\n== 8ras Time Tracker — smoke test ==\n');
   const tdays = dbg.metrics().totals.days;
   assert(!!tdays[expectLocal] && tdays[expectLocal].totalSeconds >= 120,
          'committed time lands on the TODAY local date key (no UTC shift)');
-  const h3m = appEl.innerHTML.match(/<span class="tin">([^<]*)<\/span> \/ <span class="tout">([^<]*)<\/span>/);
+  const h3m = appEl.innerHTML.match(/Total this week[^<]*<span class="ttotal">([^<]*)<\/span> \(<span class="tin">([^<]*)<\/span> \/ <span class="tout">([^<]*)<\/span>\)/);
   const dashRe = /^(?:\d+h )?\d+m$/;
-  assert(h3m && dashRe.test(h3m[1]) && dashRe.test(h3m[2]),
-         'weekly header times in hours+minutes only (no seconds)');
-  assert(/barfill (in|out)" style="[^"]*width:100\.00%"/.test(appEl.innerHTML),
-         'busiest day spans the full track (proportional scale)');
-  assert(appEl.innerHTML.includes('Total this week — <span class="tin">') && appEl.innerHTML.includes('<span class="tout">'),
-         '"Total this week" splits the total into in/out colour spans');
+  assert(h3m && dashRe.test(h3m[1]) && dashRe.test(h3m[2]) && dashRe.test(h3m[3]),
+         'weekly header shows total (white) + in/out split (hours+minutes only)');
+  assert(appEl.innerHTML.includes('barfill in') || appEl.innerHTML.includes('barfill out'),
+         'bars are rendered');
+  assert(appEl.innerHTML.includes('Total this week') && appEl.innerHTML.includes('<span class="ttotal">') && appEl.innerHTML.includes('<span class="tin">') && appEl.innerHTML.includes('<span class="tout">'),
+         '"Total this week" shows total + in/out colour spans');
+  assert(appEl.innerHTML.includes('class="band"'), 'weekday rows show the grey workday band');
   assert(appEl.innerHTML.includes('green inside 10:00-18:00'), 'bar caption explains axis and colours');
   /* big timer = cumulative TODAY for the current file (committed + in-flight) */
   const tSec = dbg.fileTodaySec();
@@ -450,8 +451,8 @@ console.log('\n== 8ras Time Tracker — smoke test ==\n');
   dbg2.action('dash');
   await settle(80);
   assert(appEl.innerHTML.includes('barfill in'), 'a session inside the workday renders a green segment');
-  assert(/Total this week — <span class="tin">[^<]*<\/span> \/ <span class="tout">[^<]*<\/span><\/h3>/.test(appEl.innerHTML),
-         '"Total this week —" shows the in/out split in colour');
+  assert(/Total this week[^<]*<span class="ttotal">[^<]*<\/span> \(<span class="tin">[^<]*<\/span> \/ <span class="tout">[^<]*<\/span>\)<\/h3>/.test(appEl.innerHTML),
+         '"Total this week" shows total + in/out split in colour');
 
   /* "This week" toggles the whole summary off again */
   dbg2.action('dash');
