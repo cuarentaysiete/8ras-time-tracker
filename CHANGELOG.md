@@ -2,6 +2,13 @@
 
 All notable changes to 8ras Time Tracker are documented here.
 
+## [2.5.6] - 2025-11-22
+
+### Fixed
+- **Grey workday band now left-aligned**: reverted to left-aligned (left:0) with width proportional to the workday duration (e.g., 8h/12h = 66.67%). Previously (v2.5.5) it was positioned by real time, which caused it to appear centered.
+- **Green bars restored**: reverted to the simpler `barFillsHtml()` logic (contiguous in/out bars, left-aligned). The complex `barFragmentsHtml()` from v2.5.5 was removed.
+- **Visual hierarchy**: the grey band (workday window) is now a left-aligned background, and the green/orange bars (activity) are left-aligned on top of it. The green bar shows time inside the workday, and the orange bar shows time outside the workday (or weekends).
+
 ## [2.5.5] - 2025-11-22
 
 ### Changed
