@@ -2,6 +2,11 @@
 
 All notable changes to 8ras Time Tracker are documented here.
 
+## [2.5.2] - 2025-11-22
+
+### Fixed
+- **Grey workday band now left-aligned and scaled**: the band is now left-aligned (default `left:0`) and scaled proportionally to the busiest day, matching the green/orange activity bars. Previously it was positioned by real time (41.67%-75.00% for 10:00-18:00), which created a visual mismatch with the activity bars.
+
 ## [2.5.1] - 2025-11-22
 
 ### Added
