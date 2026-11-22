@@ -162,7 +162,7 @@ console.log('\n== 8ras Time Tracker — smoke test ==\n');
   await settle();
   const dbg = sb.__debug;
   assert(!!dbg, '__debug hook exposed');
-  assert(appEl.innerHTML.includes('v2.4.1'), 'version banner visible in UI');
+  assert(appEl.innerHTML.includes('v2.5.0'), 'version banner visible in UI');
   assert(appEl.innerHTML.includes('8ras time tracker'), 'official name shown');
   assert(dbg.state().stage === 'setup', 'initial stage is "setup"');
   assert(appEl.innerHTML.includes('Select folder'), 'setup screen rendered');
@@ -243,9 +243,9 @@ console.log('\n== 8ras Time Tracker — smoke test ==\n');
   assert(!!tdays[expectLocal] && tdays[expectLocal].totalSeconds >= 120,
          'committed time lands on the TODAY local date key (no UTC shift)');
   const h3m = appEl.innerHTML.match(/<span class="tin">([^<]*)<\/span> \/ <span class="tout">([^<]*)<\/span>/);
-  const unitRe = /^(?:\d+h )?(?:\d+m )?\d+s$/;
-  assert(h3m && unitRe.test(h3m[1]) && unitRe.test(h3m[2]),
-         'weekly header times carry explicit units ("Hh MMm SSs")');
+  const dashRe = /^(?:\d+h )?\d+m$/;
+  assert(h3m && dashRe.test(h3m[1]) && dashRe.test(h3m[2]),
+         'weekly header times in hours+minutes only (no seconds)');
   assert(/barfill (in|out)" style="[^"]*width:100\.00%"/.test(appEl.innerHTML),
          'busiest day spans the full track (proportional scale)');
   assert(appEl.innerHTML.includes('Total this week — <span class="tin">') && appEl.innerHTML.includes('<span class="tout">'),
@@ -426,19 +426,23 @@ console.log('\n== 8ras Time Tracker — smoke test ==\n');
     console.log('   (weekend e2e skipped — Sat/Sun not reached yet this week; unit test above covers the rule)');
   }
 
-  /* deterministic GREEN: point the workday at "now" and log a 30-min session around it */
-  const ancMin = (() => { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); })();
-  let aw = ancMin >= 70 ? ancMin - 60 : 0;
-  let bw = ancMin >= 70 ? Math.min(ancMin + 60, 1439) : ancMin + 60;
-  if (bw <= aw + 1) { aw = 0; bw = Math.max(2, Math.min(ancMin + 60, 1439)); }
-  els.workStart.value = hm(aw);
-  els.workEnd.value = hm(bw);
+  /* deterministic GREEN: use a weekday date (most recent Monday + N hours) so the
+     session always lands on a weekday, where green is possible. */
+  const nowD = new Date();
+  const dow = nowD.getDay(); // 0=Sun..6=Sat
+  const daysAgoToMonday = dow === 0 ? 6 : dow - 1;
+  const monday = new Date(nowD.getFullYear(), nowD.getMonth(), nowD.getDate() - daysAgoToMonday);
+  // Place the session at Monday 14:00-14:30 local time
+  const wedStart = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate(), 14, 0, 0);
+  const wedEnd = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate(), 14, 30, 0);
+  // Set work hours to cover 14:00-14:30
+  els.workStart.value = '09:00';
+  els.workEnd.value = '18:00';
   dbg2.action('setWorkHours');
   await settle(50);
-  const ancEnd = Date.now();
   dbg2.metrics().projects.Nike_Campaign.files['poster.psd'].sessions.push({
-    id: 't-anc', date: '', startTime: new Date(ancEnd - 30 * 60000).toISOString(),
-    endTime: new Date(ancEnd).toISOString(),
+    id: 't-anc', date: '', startTime: wedStart.toISOString(),
+    endTime: wedEnd.toISOString(),
     seconds: 1800, project: 'Nike_Campaign', file: 'poster.psd',
     filePath: '/Projects/Nike_Campaign/poster.psd', isActive: false
   });

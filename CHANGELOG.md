@@ -2,6 +2,18 @@
 
 All notable changes to 8ras Time Tracker are documented here.
 
+## [2.5.0] - 2025-11-22
+
+### Added
+- **Dashboard colour scheme**: green `#2ecc71` (inside workday), orange `#e09145` (outside), track `#272732`, day label `#8e8e9e`, current day `#4a80f0` bold, right-aligned monospace counter `#b0b0c0` -- all matching the reference design.
+- **Dashboard times in hours + minutes only** (no seconds): "1h 05m", "4m", "0m". The live timer still shows full "Hh MMm SSs".
+
+### Changed
+- Bar track height increased from 7px to 10px, gap from 6px to 10px.
+- Day label width from 17px to 22px.
+- Right counter fixed at 68px width.
+- Test suite expanded to 87 assertions; the "deterministic GREEN" scenario now uses a weekday date to avoid weekend-always-orange interference.
+
 ## [2.4.1] - 2025-11-17
 
 ### Fixed

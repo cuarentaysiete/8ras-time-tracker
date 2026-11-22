@@ -1,7 +1,7 @@
 'use strict';
 
 /* ════════════════════════════════════════════════════════════════════
-   8ras Time Tracker — v2.4.1
+   8ras Time Tracker — v2.5.0
    Adobe Photoshop UXP panel plugin. Classic script (NO ES modules).
 
    All UXP API calls verified against the official reference
@@ -14,10 +14,10 @@
      file.read()                            → string (utf8 default)
      file.write(data[, {append}])           → replaces unless append
    ══════════════════════════════════════════════════════════════════ */
-console.log('[8ras v2.4.1] main.js loaded');
+console.log('[8ras v2.5.0] main.js loaded');
 
 var NAME = '8ras time tracker';
-var VERSION = '2.4.1';
+var VERSION = '2.5.0';
 var TOKEN_KEY = 'eighras-tracker-token';   // persistent-token key in storage.local
 var TOKEN_FILE = '.tracker-token.json';    // human-readable marker inside the data folder
 var METRICS_FILE = 'metrics.json';
@@ -107,11 +107,17 @@ function uid() {
   return 'm' + Date.now().toString(36) + '-' + n.toString(36) +
          Math.floor(Math.random() * 4294967295).toString(36);
 }
-/* durations with explicit units: "2h 05m 09s" / "4m 12s" / "38s" */
-function fmtUnits(totalSec) {
+/* durations with explicit units: "2h 05m 09s" / "4m 12s" / "38s".
+   With noSec=true (dashboard): "2h 05m" / "4m" -- seconds dropped. */
+function fmtUnits(totalSec, noSec) {
   totalSec = Math.max(0, Math.floor(totalSec));
   var h = Math.floor(totalSec / 3600), m = Math.floor((totalSec % 3600) / 60), s = totalSec % 60;
   function p(x) { return (x < 10 ? '0' : '') + x; }
+  if (noSec) {
+    if (h > 0) return h + 'h ' + p(m) + 'm';
+    if (m > 0) return m + 'm';
+    return '0m';
+  }
   if (h > 0) return h + 'h ' + p(m) + 'm ' + p(s) + 's';
   if (m > 0) return m + 'm ' + p(s) + 's';
   return s + 's';
@@ -658,15 +664,15 @@ function render() {
     } else if (state.showDash) {
       var maxSec = 0;
       days.forEach(function (d) { if (d.sec > maxSec) maxSec = d.sec; });
-      html += '<div class="card week"><h3>Total this week — <span class="tin">' + fmtUnits(Math.round(state.weekIn)) + '</span> / <span class="tout">' + fmtUnits(Math.round(state.weekOut)) + '</span></h3>';
+      html += '<div class="card week"><h3>Total this week — <span class="tin">' + fmtUnits(Math.round(state.weekIn), true) + '</span> / <span class="tout">' + fmtUnits(Math.round(state.weekOut), true) + '</span></h3>';
       if (!state.weekProjects.length && state.weekTotal === 0) {
         html += '<p class="dim">No tracked time this week yet.</p>';
       } else {
         html += '<div class="weekrows">';
         days.forEach(function (d) {
-          html += '<div class="barrow' + (d.today ? ' today' : '') + '" title="' + d.iso + (d.sec >= 1 ? ' — ' + fmtUnits(d.sec) : '') + '"><span class="wd">' + d.label + '</span>' +
+          html += '<div class="barrow' + (d.today ? ' today' : '') + '" title="' + d.iso + (d.sec >= 1 ? ' — ' + fmtUnits(d.sec, true) : '') + '"><span class="wd">' + d.label + '</span>' +
                   '<div class="bartrack">' + barFillsHtml(d.inSec, d.outSec, maxSec) + '</div>' +
-                  '<span class="wsec' + (d.sec < 1 ? ' zero' : '') + '">' + (d.sec >= 1 ? fmtUnits(d.sec) : '&mdash;') + '</span></div>';
+                  '<span class="wsec' + (d.sec < 1 ? ' zero' : '') + '">' + (d.sec >= 1 ? fmtUnits(d.sec, true) : '&mdash;') + '</span></div>';
         });
         html += '</div><div class="hint" style="margin-top:2px">bars scaled to the busiest day &middot; green inside ' + hmStr(state.workStart) + '-' + hmStr(state.workEnd) + ' &middot; orange outside &middot; weekends always orange</div>';
         if (state.weekProjects.length) {
@@ -674,7 +680,7 @@ function render() {
           state.weekProjects.forEach(function (p) {
             var share = state.weekTotal > 0 ? Math.round((p.sec / state.weekTotal) * 100) : 0;
             html += '<div class="proj-row"><span class="dot"></span><span class="pname" title="' + esc(p.project) + '">' + esc(p.project) + '</span>' +
-                    '<span class="ptime">' + fmtUnits(p.sec) + '</span><span class="pshare">' + share + '%</span></div>';
+                    '<span class="ptime">' + fmtUnits(p.sec, true) + '</span><span class="pshare">' + share + '%</span></div>';
           });
           html += '</div>';
         }

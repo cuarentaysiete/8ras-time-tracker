@@ -1,7 +1,7 @@
 {
   "id": "com.8ras.time-tracker.v2",
   "name": "8ras time tracker",
-  "version": "2.4.1",
+  "version": "2.5.0",
   "main": "index.html",
   "host": {
     "app": "PS",

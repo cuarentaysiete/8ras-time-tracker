@@ -13,7 +13,7 @@ A lightweight, fully offline Adobe Photoshop UXP plugin that tracks active worki
 - **Working hours** (configurable in Settings, default 10:00-18:00): the weekly dashboard colour-codes every day's bar -- green time falls inside the workday window, orange time falls outside it, and Saturday/Sunday always render fully orange. Each bar is one contiguous fill scaled proportionally to that day's total tracked time; the busiest day of the week spans the full track.
 - **Weekly dashboard** ("This week" tab, toggles the whole view on/off): Monday-to-Sunday rows (Mo through Su), proportionally coloured bars per day, "Total this week -- X / Y" header (hours inside / outside the workday), per-project breakdown.
 - **Settings panel**: adjust idle threshold and working hours (start/end time), reconfigure the data folder ("Change folder..."), toggle internal log, export CSV, and reset configuration.
-- **Explicit time units**: all durations display as "1h 05m 09s", "4m 12s", or "38s" -- never bare clock notation.
+- **Explicit time units**: the live timer shows "1h 05m 09s" (hours, minutes, seconds). Dashboard totals use "1h 05m" / "4m" / "0m" (hours + minutes only, no seconds).
 - **CSV export**: one row per session, UTF-8 BOM included for Excel compatibility. Format: `date,project,file,session_start,session_end,seconds,active`.
 - **60-second checkpoints**: intermediate saves every minute so no work is lost if Photoshop crashes or closes unexpectedly.
 - **Persistent token**: the selected data folder is remembered between Photoshop sessions using UXP's persistent token mechanism.
