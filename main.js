@@ -1,7 +1,7 @@
 'use strict';
 
 /* ════════════════════════════════════════════════════════════════════
-   8ras Time Tracker — v2.5.3
+   8ras Time Tracker — v2.5.4
    Adobe Photoshop UXP panel plugin. Classic script (NO ES modules).
 
    All UXP API calls verified against the official reference
@@ -14,10 +14,10 @@
      file.read()                            → string (utf8 default)
      file.write(data[, {append}])           → replaces unless append
    ══════════════════════════════════════════════════════════════════ */
-console.log('[8ras v2.5.3] main.js loaded');
+console.log('[8ras v2.5.4] main.js loaded');
 
 var NAME = '8ras time tracker';
-var VERSION = '2.5.3';
+var VERSION = '2.5.4';
 var TOKEN_KEY = 'eighras-tracker-token';   // persistent-token key in storage.local
 var TOKEN_FILE = '.tracker-token.json';    // human-readable marker inside the data folder
 var METRICS_FILE = 'metrics.json';
@@ -511,17 +511,17 @@ function collectDayFragments(days, nowMs) {
   return frags;
 }
 
-/* Contiguous fill for one day's bar, scaled to the full 24h track (86400s):
+/* Contiguous fill for one day's bar, scaled to a 12h track (43200s):
    green = time inside the working window, then orange = time outside it.
    All bars are left-aligned (left:0 by default). */
 function barFillsHtml(inSec, outSec) {
   var tot = inSec + outSec;
   if (tot <= 0) return '';
-  var DAY_SEC = 86400; // 24h in seconds
-  var totalPct = Math.min(100, (tot / DAY_SEC) * 100);
+  var TRACK_SEC = 43200; // 12h in seconds
+  var totalPct = Math.min(100, (tot / TRACK_SEC) * 100);
   var inPct = (inSec / tot) * totalPct;
   var outPct = (outSec / tot) * totalPct;
-  var MINW = 0.5;                       /* keep slivers visible (~45s) */
+  var MINW = 0.5;                       /* keep slivers visible (~30s) */
   if (inPct > 0 && inPct < MINW) inPct = MINW;
   if (outPct > 0 && outPct < MINW) outPct = MINW;
   var html = '';
@@ -531,7 +531,7 @@ function barFillsHtml(inSec, outSec) {
 }
 
 /* Grey workday band (weekdays only, dow 0=Mo..4=Fr): shows the configured work hours
-   (e.g. 10:00-18:00) as a left-aligned grey segment, scaled to the full 24h track. */
+   (e.g. 10:00-18:00) as a left-aligned grey segment, scaled to a 12h track. */
 function workdayBandHtml(dow) {
   if (dow >= 5) return ''; // no band on weekends (Sa=5, Su=6)
   var ws = state.workStart; // minutes from midnight
@@ -539,8 +539,8 @@ function workdayBandHtml(dow) {
   if (we <= ws) return ''; // invalid
   var workdaySec = (we - ws) * 60;
   if (workdaySec <= 0) return '';
-  var DAY_SEC = 86400; // 24h in seconds
-  var widthPct = Math.min(100, (workdaySec / DAY_SEC) * 100);
+  var TRACK_SEC = 43200; // 12h in seconds
+  var widthPct = Math.min(100, (workdaySec / TRACK_SEC) * 100);
   return '<span class="band" title="workday ' + hmStr(ws) + '-' + hmStr(we) + '" style="width:' + widthPct.toFixed(2) + '%"></span>';
 }
 

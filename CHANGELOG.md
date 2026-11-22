@@ -2,6 +2,11 @@
 
 All notable changes to 8ras Time Tracker are documented here.
 
+## [2.5.4] - 2025-11-22
+
+### Changed
+- **Track scale reduced to 12h**: the dark track (day background) now represents 12h (43200s) instead of 24h (86400s). This makes the bars more prominent: a full workday (8h) now spans 66.67% of the track instead of 33.33%. The grey workday band and the green/orange activity bars are also scaled to the 12h track.
+
 ## [2.5.3] - 2025-11-22
 
 ### Changed

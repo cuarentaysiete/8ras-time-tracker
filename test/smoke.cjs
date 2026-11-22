@@ -162,7 +162,7 @@ console.log('\n== 8ras Time Tracker — smoke test ==\n');
   await settle();
   const dbg = sb.__debug;
   assert(!!dbg, '__debug hook exposed');
-  assert(appEl.innerHTML.includes('v2.5.3'), 'version banner visible in UI');
+  assert(appEl.innerHTML.includes('v2.5.4'), 'version banner visible in UI');
   assert(appEl.innerHTML.includes('8ras time tracker'), 'official name shown');
   assert(dbg.state().stage === 'setup', 'initial stage is "setup"');
   assert(appEl.innerHTML.includes('Select folder'), 'setup screen rendered');
