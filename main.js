@@ -1,7 +1,7 @@
 'use strict';
 
 /* ════════════════════════════════════════════════════════════════════
-   8ras Time Tracker — v2.5.4
+   8ras Time Tracker — v2.5.5
    Adobe Photoshop UXP panel plugin. Classic script (NO ES modules).
 
    All UXP API calls verified against the official reference
@@ -14,10 +14,10 @@
      file.read()                            → string (utf8 default)
      file.write(data[, {append}])           → replaces unless append
    ══════════════════════════════════════════════════════════════════ */
-console.log('[8ras v2.5.4] main.js loaded');
+console.log('[8ras v2.5.5] main.js loaded');
 
 var NAME = '8ras time tracker';
-var VERSION = '2.5.4';
+var VERSION = '2.5.5';
 var TOKEN_KEY = 'eighras-tracker-token';   // persistent-token key in storage.local
 var TOKEN_FILE = '.tracker-token.json';    // human-readable marker inside the data folder
 var METRICS_FILE = 'metrics.json';
@@ -511,6 +511,51 @@ function collectDayFragments(days, nowMs) {
   return frags;
 }
 
+/* Split a day's raw fragments into in/out parts, each with aMs, bMs, and color.
+   Weekend fragments are always orange. Weekday fragments are split at the workday boundaries. */
+function dayFragmentParts(rawFrags, dayStartMs, isWeekend, workStartMin, workEndMin) {
+  var parts = [];
+  var wsMs = workStartMin * 60000; // workday start in ms from midnight
+  var weMs = workEndMin * 60000;   // workday end in ms from midnight
+  for (var i = 0; i < rawFrags.length; i++) {
+    var f = rawFrags[i];
+    if (isWeekend) {
+      // entire fragment is orange
+      parts.push({ aMs: f.aMs, bMs: f.bMs, color: 'out' });
+    } else {
+      // split at workday boundaries
+      var wsAbs = dayStartMs + wsMs;
+      var weAbs = dayStartMs + weMs;
+      // in-workday part: intersection of [f.aMs, f.bMs] with [wsAbs, weAbs]
+      var inA = Math.max(f.aMs, wsAbs);
+      var inB = Math.min(f.bMs, weAbs);
+      if (inB > inA) parts.push({ aMs: inA, bMs: inB, color: 'in' });
+      // out-workday parts: [f.aMs, inA) and (inB, f.bMs]
+      if (f.aMs < inA) parts.push({ aMs: f.aMs, bMs: inA, color: 'out' });
+      if (inB < f.bMs) parts.push({ aMs: inB, bMs: f.bMs, color: 'out' });
+    }
+  }
+  return parts;
+}
+
+/* Render day fragments as bars positioned by real time (24h scale):
+   each part is a span with left = ((aMs - dayStartMs) / 86400000 * 100)% and width = ((bMs - aMs) / 86400000 * 100)%.
+   Green = inside workday, Orange = outside workday (or weekend). */
+function barFragmentsHtml(frags, dayStartMs, isWeekend) {
+  if (!frags || frags.length === 0) return '';
+  var parts = dayFragmentParts(frags, dayStartMs, isWeekend, state.workStart, state.workEnd);
+  var DAY_MS = 86400000; // 24h in ms
+  var html = '';
+  for (var i = 0; i < parts.length; i++) {
+    var p = parts[i];
+    var leftPct = ((p.aMs - dayStartMs) / DAY_MS) * 100;
+    var widthPct = ((p.bMs - p.aMs) / DAY_MS) * 100;
+    var durSec = Math.round((p.bMs - p.aMs) / 1000);
+    html += '<span class="barfill ' + p.color + '" title="' + fmtUnits(durSec, true) + '" style="left:' + leftPct.toFixed(2) + '%;width:' + widthPct.toFixed(2) + '%"></span>';
+  }
+  return html;
+}
+
 /* Contiguous fill for one day's bar, scaled to a 12h track (43200s):
    green = time inside the working window, then orange = time outside it.
    All bars are left-aligned (left:0 by default). */
@@ -531,17 +576,16 @@ function barFillsHtml(inSec, outSec) {
 }
 
 /* Grey workday band (weekdays only, dow 0=Mo..4=Fr): shows the configured work hours
-   (e.g. 10:00-18:00) as a left-aligned grey segment, scaled to a 12h track. */
+   (e.g. 10:00-18:00) positioned by real time on the 24h track. */
 function workdayBandHtml(dow) {
   if (dow >= 5) return ''; // no band on weekends (Sa=5, Su=6)
   var ws = state.workStart; // minutes from midnight
   var we = state.workEnd;
   if (we <= ws) return ''; // invalid
-  var workdaySec = (we - ws) * 60;
-  if (workdaySec <= 0) return '';
-  var TRACK_SEC = 43200; // 12h in seconds
-  var widthPct = Math.min(100, (workdaySec / TRACK_SEC) * 100);
-  return '<span class="band" title="workday ' + hmStr(ws) + '-' + hmStr(we) + '" style="width:' + widthPct.toFixed(2) + '%"></span>';
+  var DAY_MS = 86400000; // 24h in ms
+  var leftPct = (ws * 60000 / DAY_MS) * 100;
+  var widthPct = ((we - ws) * 60000 / DAY_MS) * 100;
+  return '<span class="band" title="workday ' + hmStr(ws) + '-' + hmStr(we) + '" style="left:' + leftPct.toFixed(2) + '%;width:' + widthPct.toFixed(2) + '%"></span>';
 }
 
 /* Big timer: total tracked time TODAY for the current file (committed sessions
@@ -591,16 +635,18 @@ function weekRows() {
       dow: i, // 0=Mo..6=Su (index, not JS getDay)
       weekend: i >= 5,
       today: localISO(d) === todayISO(),
-      sec: 0, inSec: 0, outSec: 0
+      sec: 0, inSec: 0, outSec: 0,
+      frags: [] // will be populated below
     });
   }
-  var frags = collectDayFragments(days, nowMs);
+  var allFrags = collectDayFragments(days, nowMs);
   for (var j = 0; j < 7; j++) {
-    for (var q = 0; q < frags[j].length; q++) {
-      var sp = splitInterval(frags[j][q].aMs, frags[j][q].bMs, days[j].startMs, days[j].weekend, state.workStart, state.workEnd);
+    days[j].frags = allFrags[j]; // store fragments for this day
+    for (var q = 0; q < allFrags[j].length; q++) {
+      var sp = splitInterval(allFrags[j][q].aMs, allFrags[j][q].bMs, days[j].startMs, days[j].weekend, state.workStart, state.workEnd);
       days[j].inSec += sp.inSec;
       days[j].outSec += sp.outSec;
-      byProj[frags[j][q].proj] = (byProj[frags[j][q].proj] || 0) + sp.inSec + sp.outSec;
+      byProj[allFrags[j][q].proj] = (byProj[allFrags[j][q].proj] || 0) + sp.inSec + sp.outSec;
     }
     days[j].sec = Math.round(days[j].inSec + days[j].outSec);
   }
@@ -686,7 +732,7 @@ function render() {
         html += '<div class="weekrows">';
         days.forEach(function (d) {
           html += '<div class="barrow' + (d.today ? ' today' : '') + '" title="' + d.iso + (d.sec >= 1 ? ' — ' + fmtUnits(d.sec, true) : '') + '"><span class="wd">' + d.label + '</span>' +
-                  '<div class="bartrack">' + workdayBandHtml(d.dow) + barFillsHtml(d.inSec, d.outSec) + '</div>' +
+                  '<div class="bartrack">' + workdayBandHtml(d.dow) + barFragmentsHtml(d.frags, d.startMs, d.weekend) + '</div>' +
                   '<span class="wsec' + (d.sec < 1 ? ' zero' : '') + '">' + (d.sec >= 1 ? fmtUnits(d.sec, true) : '&mdash;') + '</span></div>';
         });
         html += '</div><div class="hint" style="margin-top:2px">bars scaled to the busiest day &middot; green inside ' + hmStr(state.workStart) + '-' + hmStr(state.workEnd) + ' &middot; orange outside &middot; weekends always orange</div>';

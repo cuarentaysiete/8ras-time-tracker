@@ -2,6 +2,19 @@
 
 All notable changes to 8ras Time Tracker are documented here.
 
+## [2.5.5] - 2025-11-22
+
+### Changed
+- **Bars positioned by real time (24h scale)**: the green/orange activity bars are now positioned by real time on the 24h track, not left-aligned. This means:  
+  - The grey workday band (e.g., 10:00-18:00) is positioned at 41.67%-75.00% of the track.
+  - Green bars (inside workday) appear where the activity overlaps with the workday window.
+  - Orange bars (outside workday, or weekends) appear where the activity is outside the workday window.
+  - This makes it visually clear which hours are "extra" (orange) and which are within the configured workday (green).
+
+### Added
+- `dayFragmentParts()`: splits raw activity fragments into in/out parts, each with real-time positioning.
+- `barFragmentsHtml()`: renders the in/out parts as spans positioned by real time (24h scale).
+
 ## [2.5.4] - 2025-11-22
 
 ### Changed
