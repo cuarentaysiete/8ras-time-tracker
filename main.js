@@ -1,7 +1,7 @@
 'use strict';
 
 /* ════════════════════════════════════════════════════════════════════
-   8ras Time Tracker — v2.6.1
+   8ras Time Tracker — v2.6.2
    Adobe Photoshop UXP panel plugin. Classic script (NO ES modules).
 
    All UXP API calls verified against the official reference
@@ -14,10 +14,10 @@
      file.read()                            → string (utf8 default)
      file.write(data[, {append}])           → replaces unless append
    ══════════════════════════════════════════════════════════════════ */
-console.log('[8ras v2.6.1] main.js loaded');
+console.log('[8ras v2.6.2] main.js loaded');
 
 var NAME = '8ras time tracker';
-var VERSION = '2.6.1';
+var VERSION = '2.6.2';
 var TOKEN_KEY = 'eighras-tracker-token';   // persistent-token key in storage.local
 var TOKEN_FILE = '.tracker-token.json';    // human-readable marker inside the data folder
 var METRICS_FILE = 'metrics.json';
@@ -511,91 +511,36 @@ function collectDayFragments(days, nowMs) {
   return frags;
 }
 
-/* Build a list of timeline segments for one day, each with aMs, bMs, and color.
-   Colors: 'in' (green, worked inside workday), 'out' (orange, worked outside workday),
-   'idle' (grey, workday hours not worked). Weekends: no grey, only orange for work. */
-function dayTimelineSegments(rawFrags, dayStartMs, isWeekend, workStartMin, workEndMin) {
-  var segments = [];
-  var wsAbs = dayStartMs + workStartMin * 60000; // workday start (absolute ms)
-  var weAbs = dayStartMs + workEndMin * 60000;   // workday end (absolute ms)
-  
-  // Step 1: Split raw work fragments into in/out parts
-  var workParts = [];
-  for (var i = 0; i < rawFrags.length; i++) {
-    var f = rawFrags[i];
-    if (isWeekend) {
-      // Weekends: all work is orange
-      workParts.push({ aMs: f.aMs, bMs: f.bMs, color: 'out' });
-    } else {
-      // Weekdays: split at workday boundaries
-      // in-workday part
-      var inA = Math.max(f.aMs, wsAbs);
-      var inB = Math.min(f.bMs, weAbs);
-      if (inB > inA) workParts.push({ aMs: inA, bMs: inB, color: 'in' });
-      // out-workday parts (before and after workday)
-      if (f.aMs < wsAbs && f.bMs > f.aMs) workParts.push({ aMs: f.aMs, bMs: Math.min(f.bMs, wsAbs), color: 'out' });
-      if (f.bMs > weAbs && f.aMs < f.bMs) workParts.push({ aMs: Math.max(f.aMs, weAbs), bMs: f.bMs, color: 'out' });
-    }
-  }
-  
-  // Step 2: Sort workParts by start time
-  workParts.sort(function (a, b) { return a.aMs - b.aMs; });
-  
-  // Step 3: Add grey segments for workday hours not covered by workParts
-  if (!isWeekend) {
-    var greyCursor = wsAbs; // start of workday
-    for (var j = 0; j < workParts.length; j++) {
-      var wp = workParts[j];
-      // Only consider work parts that are within or overlap with the workday
-      if (wp.color === 'in') {
-        // This work part is within the workday
-        // Add grey from greyCursor to wp.aMs (if within workday and before work starts)
-        if (wp.aMs > greyCursor && wp.aMs < weAbs) {
-          segments.push({ aMs: greyCursor, bMs: wp.aMs, color: 'idle' });
-        }
-        // Move grey cursor past the work part
-        greyCursor = Math.max(greyCursor, wp.bMs);
-      } else if (wp.color === 'out' && wp.aMs < weAbs && wp.bMs > wsAbs) {
-        // This out-work part overlaps with the workday (shouldn't happen, but handle it)
-        // Actually, out-work parts are outside the workday by definition, so this won't happen
-      }
-    }
-    // Add remaining grey after the last work part (if within workday)
-    if (greyCursor < weAbs) {
-      segments.push({ aMs: greyCursor, bMs: weAbs, color: 'idle' });
-    }
-  }
-  
-  // Step 4: Add all work parts (in/out)
-  for (var k = 0; k < workParts.length; k++) {
-    segments.push(workParts[k]);
-  }
-  
-  // Step 5: Sort all segments by start time
-  segments.sort(function (a, b) { return a.aMs - b.aMs; });
-  
-  return segments;
+/* Contiguous fill for one day's bar, scaled to a 12h track (43200s):
+   green = time inside the working window, then orange = time outside it.
+   All bars are left-aligned (left:0 by default). */
+function barFillsHtml(inSec, outSec) {
+  var tot = inSec + outSec;
+  if (tot <= 0) return '';
+  var TRACK_SEC = 43200; // 12h in seconds
+  var totalPct = Math.min(100, (tot / TRACK_SEC) * 100);
+  var inPct = (inSec / tot) * totalPct;
+  var outPct = (outSec / tot) * totalPct;
+  var MINW = 0.5;                       /* keep slivers visible (~30s) */
+  if (inPct > 0 && inPct < MINW) inPct = MINW;
+  if (outPct > 0 && outPct < MINW) outPct = MINW;
+  var html = '';
+  if (inPct > 0) html += '<span class="barfill in" title="' + fmtUnits(inSec, true) + '" style="width:' + inPct.toFixed(2) + '%"></span>';
+  if (outPct > 0) html += '<span class="barfill out" title="' + fmtUnits(outSec, true) + '" style="left:' + inPct.toFixed(2) + '%;width:' + outPct.toFixed(2) + '%"></span>';
+  return html;
 }
 
-/* Render the day timeline as bars positioned by real time (24h scale):
-   each segment is a span with left = ((aMs - dayStartMs) / 86400000 * 100)% and width = ((bMs - aMs) / 86400000 * 100)%.
-   Green = worked inside workday, Orange = worked outside workday, Grey = workday not worked. */
-function barTimelineHtml(frags, dayStartMs, isWeekend) {
-  if (!frags) return '';
-  var segs = dayTimelineSegments(frags, dayStartMs, isWeekend, state.workStart, state.workEnd);
-  if (segs.length === 0) return '';
-  var DAY_MS = 86400000; // 24h in ms
-  var html = '';
-  for (var i = 0; i < segs.length; i++) {
-    var s = segs[i];
-    var leftPct = ((s.aMs - dayStartMs) / DAY_MS) * 100;
-    var widthPct = ((s.bMs - s.aMs) / DAY_MS) * 100;
-    var durSec = Math.round((s.bMs - s.aMs) / 1000);
-    var cls = s.color === 'idle' ? 'band' : 'barfill ' + s.color;
-    var title = s.color === 'idle' ? '' : fmtUnits(durSec, true);
-    html += '<span class="' + cls + '"' + (title ? ' title="' + title + '"' : '') + ' style="left:' + leftPct.toFixed(2) + '%;width:' + widthPct.toFixed(2) + '%"></span>';
-  }
-  return html;
+/* Grey workday band (weekdays only, dow 0=Mo..4=Fr): left-aligned, width = workday duration / 12h. */
+function workdayBandHtml(dow) {
+  if (dow >= 5) return ''; // no band on weekends (Sa=5, Su=6)
+  var ws = state.workStart; // minutes from midnight
+  var we = state.workEnd;
+  if (we <= ws) return ''; // invalid
+  var workdaySec = (we - ws) * 60;
+  if (workdaySec <= 0) return '';
+  var TRACK_SEC = 43200; // 12h in seconds
+  var widthPct = Math.min(100, (workdaySec / TRACK_SEC) * 100);
+  return '<span class="band" title="workday ' + hmStr(ws) + '-' + hmStr(we) + '" style="width:' + widthPct.toFixed(2) + '%"></span>';
 }
 
 /* Contiguous fill for one day's bar, scaled to a 12h track (43200s):
@@ -774,7 +719,7 @@ function render() {
         html += '<div class="weekrows">';
         days.forEach(function (d) {
           html += '<div class="barrow' + (d.today ? ' today' : '') + '" title="' + d.iso + (d.sec >= 1 ? ' — ' + fmtUnits(d.sec, true) : '') + '"><span class="wd">' + d.label + '</span>' +
-                  '<div class="bartrack">' + barTimelineHtml(d.frags, d.startMs, d.weekend) + '</div>' +
+                  '<div class="bartrack">' + workdayBandHtml(d.dow) + barFillsHtml(d.inSec, d.outSec) + '</div>' +
                   '<span class="wsec' + (d.sec < 1 ? ' zero' : '') + '">' + (d.sec >= 1 ? fmtUnits(d.sec, true) : '&mdash;') + '</span></div>';
         });
         html += '</div><div class="hint" style="margin-top:2px">bars scaled to the busiest day &middot; green inside ' + hmStr(state.workStart) + '-' + hmStr(state.workEnd) + ' &middot; orange outside &middot; weekends always orange</div>';

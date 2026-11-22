@@ -2,6 +2,17 @@
 
 All notable changes to 8ras Time Tracker are documented here.
 
+## [2.6.2] - 2025-11-22
+
+### Fixed
+- **Simplified the timeline rendering**: reverted to the robust `workdayBandHtml() + barFillsHtml()` approach (from v2.5.4), which uses a 12h track and renders contiguous in/out bars. The complex `barTimelineHtml()` (v2.6.0/2.6.1) had bugs and was removed.
+- **Track is no longer too long**: the track now spans 12h (43200s), not 24h, so there's less empty space on the right.
+- **Green/orange bars are back**: the simpler `barFillsHtml()` correctly renders the green (in-workday) and orange (out-of-workday) bars, left-aligned and contiguous.
+- **Grey workday band is back**: the `workdayBandHtml()` correctly renders the grey band (workday window), left-aligned and proportional to the workday duration.
+
+### Removed
+- `dayTimelineSegments()` and `barTimelineHtml()`: the complex timeline functions from v2.6.0/2.6.1, which had rendering bugs.
+
 ## [2.6.1] - 2025-11-22
 
 ### Fixed
