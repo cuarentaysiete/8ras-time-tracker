@@ -2,6 +2,29 @@
 
 All notable changes to 8ras Time Tracker are documented here.
 
+## [2.6.0] - 2025-11-22
+
+### Added
+- **Real-time timeline for the weekly dashboard**: the day bars now show a detailed timeline, not just contiguous in/out fills.  
+  - **Green segments**: time worked inside the workday (e.g., 8:00-18:00), positioned by real time.  
+  - **Orange segments**: time worked outside the workday (extra hours), positioned by real time.  
+  - **Grey segments**: workday hours not worked (idle time), positioned by real time.  
+  - Example: if the workday is 8:00-18:00 and you worked 8:05-10:05, 14:35-16:21, and 17:00-20:00, the bar shows:  
+    - 8:00-8:05: grey (workday, not worked)  
+    - 8:05-10:05: green (worked inside workday)  
+    - 10:05-14:35: grey (workday, not worked)  
+    - 14:35-16:21: green (worked inside workday)  
+    - 16:21-17:00: grey (workday, not worked)  
+    - 17:00-18:00: green (worked inside workday)  
+    - 18:00-20:00: orange (worked outside workday)  
+  - This gives a clear visual of your workday rhythm, including idle time.
+- `dayTimelineSegments()`: calculates all segments (in/out/idle) for a day, positioned by real time.
+- `barTimelineHtml()`: renders the segments as spans positioned by real time (24h scale).
+
+### Changed
+- **Scale**: the timeline now uses a 24h scale (86400s), not 12h. This allows showing the full day, including extra hours after the workday.
+- **Visual hierarchy**: the grey segments (idle workday) are now visible, giving context to the green (worked) and orange (extra) segments.
+
 ## [2.5.6] - 2025-11-22
 
 ### Fixed
