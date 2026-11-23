@@ -197,3 +197,12 @@ All notable changes to 8ras Time Tracker are documented here.
 
 ### Removed
 - All React/Vite build tooling (Vite was incompatible with UXP's Chromium V8 engine).
+
+## [2.7.0] - 2025-11-22
+
+### Changed
+- **Real-time positioning with margins**: Track now shows 2h before workday + workday + 4h after, creating a context window
+- **Grey band positioned at real work hours**: No longer left-aligned, now positioned where the workday actually occurs
+- **Green/orange bars positioned by real time**: Activity bars appear at their actual time-of-day position
+- **Fragment splitting**: Sessions that cross workday boundaries are split into in/out parts
+- **No more left-aligned bars**: All elements are positioned by their actual time within the track

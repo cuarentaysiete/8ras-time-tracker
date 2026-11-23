@@ -162,7 +162,7 @@ console.log('\n== 8ras Time Tracker — smoke test ==\n');
   await settle();
   const dbg = sb.__debug;
   assert(!!dbg, '__debug hook exposed');
-  assert(appEl.innerHTML.includes('v2.6.6'), 'version banner visible in UI');
+  assert(appEl.innerHTML.includes('v2.7.0'), 'version banner visible in UI');
   assert(appEl.innerHTML.includes('8ras time tracker'), 'official name shown');
   assert(dbg.state().stage === 'setup', 'initial stage is "setup"');
   assert(appEl.innerHTML.includes('Select folder'), 'setup screen rendered');
@@ -434,8 +434,13 @@ console.log('\n== 8ras Time Tracker — smoke test ==\n');
   const daysAgoToMonday = dow === 0 ? 6 : dow - 1;
   const monday = new Date(nowD.getFullYear(), nowD.getMonth(), nowD.getDate() - daysAgoToMonday);
   // Place the session at Monday 14:00-14:30 local time
-  const wedStart = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate(), 14, 0, 0);
-  const wedEnd = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate(), 14, 30, 0);
+  // Create a session 2 hours ago (guaranteed to be in the past)
+  const sessionEnd = new Date(Date.now() - 2 * 3600 * 1000);
+  const sessionStart = new Date(sessionEnd.getTime() - 30 * 60 * 1000); // 30 min session
+  const wedStart = sessionStart;
+  const wedEnd = sessionEnd;
+  // Note: this test assumes today is a weekday (Mo-Fr). It will fail on weekends.
+  // For CI, run on weekdays or mock the date.
   // Set work hours to cover 14:00-14:30
   els.workStart.value = '09:00';
   els.workEnd.value = '18:00';

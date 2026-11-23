@@ -1,7 +1,7 @@
 'use strict';
 
 /* ════════════════════════════════════════════════════════════════════
-   8ras Time Tracker — v2.6.6
+   8ras Time Tracker — v2.7.0
    Adobe Photoshop UXP panel plugin. Classic script (NO ES modules).
 
    All UXP API calls verified against the official reference
@@ -14,10 +14,10 @@
      file.read()                            → string (utf8 default)
      file.write(data[, {append}])           → replaces unless append
    ══════════════════════════════════════════════════════════════════ */
-console.log('[8ras v2.6.6] main.js loaded');
+console.log('[8ras v2.7.0] main.js loaded');
 
 var NAME = '8ras time tracker';
-var VERSION = '2.6.6';
+var VERSION = '2.7.0';
 var TOKEN_KEY = 'eighras-tracker-token';   // persistent-token key in storage.local
 var TOKEN_FILE = '.tracker-token.json';    // human-readable marker inside the data folder
 var METRICS_FILE = 'metrics.json';
@@ -512,67 +512,99 @@ function collectDayFragments(days, nowMs) {
 }
 
 /* Contiguous fill for one day's bar, scaled to a 12h track (43200s):
-   green = time inside the working window, then orange = time outside it.
-   All bars are left-aligned (left:0 by default). */
-function barFillsHtml(inSec, outSec) {
-  var tot = inSec + outSec;
-  if (tot <= 0) return '';
-  var TRACK_SEC = 43200; // 12h in seconds
-  var totalPct = Math.min(100, (tot / TRACK_SEC) * 100);
-  var inPct = (inSec / tot) * totalPct;
-  var outPct = (outSec / tot) * totalPct;
-  var MINW = 0.5;                       /* keep slivers visible (~30s) */
-  if (inPct > 0 && inPct < MINW) inPct = MINW;
-  if (outPct > 0 && outPct < MINW) outPct = MINW;
-  var html = '';
-  if (inPct > 0) html += '<span class="barfill in" title="' + fmtUnits(inSec, true) + '" style="width:' + inPct.toFixed(2) + '%"></span>';
-  if (outPct > 0) html += '<span class="barfill out" title="' + fmtUnits(outSec, true) + '" style="left:' + inPct.toFixed(2) + '%;width:' + outPct.toFixed(2) + '%"></span>';
-  return html;
-}
-
-/* Grey workday band (weekdays only, dow 0=Mo..4=Fr): left-aligned, width = workday duration / 12h. */
-function workdayBandHtml(dow) {
-  if (dow >= 5) return ''; // no band on weekends (Sa=5, Su=6)
-  var ws = state.workStart; // minutes from midnight
-  var we = state.workEnd;
-  if (we <= ws) return ''; // invalid
-  var workdaySec = (we - ws) * 60;
-  if (workdaySec <= 0) return '';
-  var TRACK_SEC = 43200; // 12h in seconds
-  var widthPct = Math.min(100, (workdaySec / TRACK_SEC) * 100);
-  return '<span class="band" title="workday ' + hmStr(ws) + '-' + hmStr(we) + '" style="width:' + widthPct.toFixed(2) + '%"></span>';
-}
+   
 
 /* Contiguous fill for one day's bar, scaled to a 12h track (43200s):
-   green = time inside the working window, then orange = time outside it.
-   All bars are left-aligned (left:0 by default). */
-function barFillsHtml(inSec, outSec) {
-  var tot = inSec + outSec;
-  if (tot <= 0) return '';
-  var TRACK_SEC = 43200; // 12h in seconds
-  var totalPct = Math.min(100, (tot / TRACK_SEC) * 100);
-  var inPct = (inSec / tot) * totalPct;
-  var outPct = (outSec / tot) * totalPct;
-  var MINW = 0.5;                       /* keep slivers visible (~30s) */
-  if (inPct > 0 && inPct < MINW) inPct = MINW;
-  if (outPct > 0 && outPct < MINW) outPct = MINW;
-  var html = '';
-  if (inPct > 0) html += '<span class="barfill in" title="' + fmtUnits(inSec, true) + '" style="width:' + inPct.toFixed(2) + '%"></span>';
-  if (outPct > 0) html += '<span class="barfill out" title="' + fmtUnits(outSec, true) + '" style="left:' + inPct.toFixed(2) + '%;width:' + outPct.toFixed(2) + '%"></span>';
-  return html;
+   
+
+/* Track scale: 2h before work start + workday duration + 4h after work end. */
+function trackScale() {
+  var ws = state.workStart || 540;
+  var we = state.workEnd || 1080;
+  if (we <= ws) we = ws + 540;
+  var trackStartMin = Math.max(0, ws - 120);
+  var trackEndMin = we + 240;
+  var trackSec = (trackEndMin - trackStartMin) * 60;
+  return { trackStartMin: trackStartMin, trackSec: trackSec };
 }
 
-/* Grey workday band (weekdays only, dow 0=Mo..4=Fr): left-aligned, width = workday duration / 12h. */
+/* Convert minutes-from-midnight to percentage of track width. */
+function posPct(minsFromMidnight) {
+  var ts = trackScale();
+  var relMin = minsFromMidnight - ts.trackStartMin;
+  if (relMin < 0) return 0;
+  if (relMin > ts.trackSec / 60) return 100;
+  return (relMin / (ts.trackSec / 60)) * 100;
+}
+
+/* Grey workday band (weekdays only): positioned at real work hours. */
 function workdayBandHtml(dow) {
-  if (dow >= 5) return ''; // no band on weekends (Sa=5, Su=6)
-  var ws = state.workStart; // minutes from midnight
-  var we = state.workEnd;
-  if (we <= ws) return ''; // invalid
-  var workdaySec = (we - ws) * 60;
-  if (workdaySec <= 0) return '';
-  var TRACK_SEC = 43200; // 12h in seconds
-  var widthPct = Math.min(100, (workdaySec / TRACK_SEC) * 100);
-  return '<span class="band" title="workday ' + hmStr(ws) + '-' + hmStr(we) + '" style="width:' + widthPct.toFixed(2) + '%"></span>';
+  if (dow >= 5) return '';
+  var ws = state.workStart || 540;
+  var we = state.workEnd || 1080;
+  if (we <= ws) return '';
+  var leftPct = posPct(ws);
+  var rightPct = posPct(we);
+  var widthPct = rightPct - leftPct;
+  if (widthPct <= 0) return '';
+  return '<span class="band" title="workday ' + hmStr(ws) + '-' + hmStr(we) + '" style="left:' + leftPct.toFixed(2) + '%;width:' + widthPct.toFixed(2) + '%"></span>';
+}
+
+/* Render one day's activity bars positioned by real time. */
+function barFillsHtml(frags, dayStartMs, isWeekend) {
+  if (!frags || frags.length === 0) return '';
+  var ws = state.workStart || 540;
+  var we = state.workEnd || 1080;
+  if (we <= ws) we = ws + 540;
+  var MINW = 0.5;
+  var html = '';
+  for (var i = 0; i < frags.length; i++) {
+    var f = frags[i];
+    var sMin = (f.aMs - dayStartMs) / 60000;
+    var eMin = (f.bMs - dayStartMs) / 60000;
+    if (eMin <= sMin) continue;
+    
+    // Handle fragments that cross workday boundaries
+    if (!isWeekend) {
+      if (sMin < ws && eMin > ws) {
+        // Split: out [sMin, ws], in [ws, eMin]
+        if (ws > sMin) {
+          var l1 = posPct(sMin), w1 = Math.max(MINW, posPct(ws) - l1);
+          var s1 = Math.round((ws - sMin) * 60);
+          html += '<span class="barfill out" title="' + fmtUnits(s1, true) + '" style="left:' + l1.toFixed(2) + '%;width:' + w1.toFixed(2) + '%"></span>';
+        }
+        if (eMin > ws) {
+          var l2 = posPct(ws), w2 = Math.max(MINW, posPct(eMin) - l2);
+          var s2 = Math.round((eMin - ws) * 60);
+          html += '<span class="barfill in" title="' + fmtUnits(s2, true) + '" style="left:' + l2.toFixed(2) + '%;width:' + w2.toFixed(2) + '%"></span>';
+        }
+        continue;
+      }
+      if (sMin < we && eMin > we) {
+        // Split: in [sMin, we], out [we, eMin]
+        if (we > sMin) {
+          var l3 = posPct(sMin), w3 = Math.max(MINW, posPct(we) - l3);
+          var s3 = Math.round((we - sMin) * 60);
+          html += '<span class="barfill in" title="' + fmtUnits(s3, true) + '" style="left:' + l3.toFixed(2) + '%;width:' + w3.toFixed(2) + '%"></span>';
+        }
+        if (eMin > we) {
+          var l4 = posPct(we), w4 = Math.max(MINW, posPct(eMin) - l4);
+          var s4 = Math.round((eMin - we) * 60);
+          html += '<span class="barfill out" title="' + fmtUnits(s4, true) + '" style="left:' + l4.toFixed(2) + '%;width:' + w4.toFixed(2) + '%"></span>';
+        }
+        continue;
+      }
+    }
+    
+    // Simple: fully inside or fully outside
+    var cls = (!isWeekend && sMin >= ws && sMin < we) ? 'in' : 'out';
+    var leftPct = posPct(sMin);
+    var rightPct = posPct(eMin);
+    var widthPct = Math.max(MINW, rightPct - leftPct);
+    var sec = Math.round((eMin - sMin) * 60);
+    html += '<span class="barfill ' + cls + '" title="' + fmtUnits(sec, true) + '" style="left:' + leftPct.toFixed(2) + '%;width:' + widthPct.toFixed(2) + '%"></span>';
+  }
+  return html;
 }
 
 /* Big timer: total tracked time TODAY for the current file (committed sessions
@@ -721,7 +753,7 @@ function render() {
         html += '<div class="weekrows">';
         days.forEach(function (d) {
           html += '<div class="barrow' + (d.today ? ' today' : '') + '" title="' + d.iso + (d.sec >= 1 ? ' — ' + fmtUnits(d.sec, true) : '') + '"><span class="wd">' + d.label + '</span>' +
-                  '<div class="bartrack">' + workdayBandHtml(d.dow) + barFillsHtml(d.inSec, d.outSec) + '</div>' +
+                  '<div class="bartrack">' + workdayBandHtml(d.dow) + barFillsHtml(d.frags, d.startMs, d.weekend) + '</div>' +
                   '<span class="wsec' + (d.sec < 1 ? ' zero' : '') + '">' + (d.sec >= 1 ? fmtUnits(d.sec, true) : '&mdash;') + '</span></div>';
         });
         html += '</div><div class="hint" style="margin-top:2px">bars scaled to the busiest day &middot; green inside ' + hmStr(state.workStart) + '-' + hmStr(state.workEnd) + ' &middot; orange outside &middot; weekends always orange</div>';
