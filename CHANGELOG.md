@@ -2,6 +2,12 @@
 
 All notable changes to 8ras Time Tracker are documented here.
 
+## [2.6.6] - 2025-11-22
+
+### Fixed
+- **Settings button now toggles**: clicking "Settings" now shows/hides the settings panel (like "This week" does), instead of only showing it.
+- **Tab active state is now much more distinct**: the active tab now has a solid blue background (#4a90d9), white text, and a drop shadow, making it impossible to miss which tab is currently showing.
+
 ## [2.6.5] - 2025-11-22
 
 ### Added

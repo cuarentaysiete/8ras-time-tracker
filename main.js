@@ -1,7 +1,7 @@
 'use strict';
 
 /* ════════════════════════════════════════════════════════════════════
-   8ras Time Tracker — v2.6.5
+   8ras Time Tracker — v2.6.6
    Adobe Photoshop UXP panel plugin. Classic script (NO ES modules).
 
    All UXP API calls verified against the official reference
@@ -14,10 +14,10 @@
      file.read()                            → string (utf8 default)
      file.write(data[, {append}])           → replaces unless append
    ══════════════════════════════════════════════════════════════════ */
-console.log('[8ras v2.6.5] main.js loaded');
+console.log('[8ras v2.6.6] main.js loaded');
 
 var NAME = '8ras time tracker';
-var VERSION = '2.6.5';
+var VERSION = '2.6.6';
 var TOKEN_KEY = 'eighras-tracker-token';   // persistent-token key in storage.local
 var TOKEN_FILE = '.tracker-token.json';    // human-readable marker inside the data folder
 var METRICS_FILE = 'metrics.json';
@@ -956,7 +956,7 @@ window.__action = function (name, arg) {
   if (name === 'toggleLog') { state.showLogs = !state.showLogs; render(); }
   else if (name === 'clearLog') { logs.length = 0; render(); }
   else if (name === 'dash') { state.showDash = !state.showDash; state.showSettings = false; render(); }
-  else if (name === 'settings') { state.showSettings = true; state.showDash = false; render(); }
+  else if (name === 'settings') { state.showSettings = !state.showSettings; state.showDash = false; render(); }
   else if (name === 'configure') { void configure(); }
   else if (name === 'exportCsv') { void exportCsv(); }
   else if (name === 'resetConfig') { resetConfig(); }
