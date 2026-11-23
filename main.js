@@ -522,7 +522,7 @@ function trackScale() {
   var ws = state.workStart || 540;
   var we = state.workEnd || 1080;
   if (we <= ws) we = ws + 540;
-  var trackStartMin = Math.max(0, ws - 120);
+  var trackStartMin = Math.max(0, ws - 30);
   var trackEndMin = we + 240;
   var trackSec = (trackEndMin - trackStartMin) * 60;
   return { trackStartMin: trackStartMin, trackSec: trackSec };
@@ -547,7 +547,7 @@ function workdayBandHtml(dow) {
   var rightPct = posPct(we);
   var widthPct = rightPct - leftPct;
   if (widthPct <= 0) return '';
-  return '<span class="band" title="workday ' + hmStr(ws) + '-' + hmStr(we) + '" style="left:' + leftPct.toFixed(2) + '%;width:' + widthPct.toFixed(2) + '%"></span>';
+  return '<span class="band" style="left:' + leftPct.toFixed(2) + '%;width:' + widthPct.toFixed(2) + '%"></span>';
 }
 
 /* Render one day's activity bars positioned by real time. */
@@ -571,12 +571,12 @@ function barFillsHtml(frags, dayStartMs, isWeekend) {
         if (ws > sMin) {
           var l1 = posPct(sMin), w1 = Math.max(MINW, posPct(ws) - l1);
           var s1 = Math.round((ws - sMin) * 60);
-          html += '<span class="barfill out" title="' + fmtUnits(s1, true) + '" style="left:' + l1.toFixed(2) + '%;width:' + w1.toFixed(2) + '%"></span>';
+          html += '<span class="barfill out" style="left:' + l1.toFixed(2) + '%;width:' + w1.toFixed(2) + '%"></span>';
         }
         if (eMin > ws) {
           var l2 = posPct(ws), w2 = Math.max(MINW, posPct(eMin) - l2);
           var s2 = Math.round((eMin - ws) * 60);
-          html += '<span class="barfill in" title="' + fmtUnits(s2, true) + '" style="left:' + l2.toFixed(2) + '%;width:' + w2.toFixed(2) + '%"></span>';
+          html += '<span class="barfill in" style="left:' + l2.toFixed(2) + '%;width:' + w2.toFixed(2) + '%"></span>';
         }
         continue;
       }
@@ -585,12 +585,12 @@ function barFillsHtml(frags, dayStartMs, isWeekend) {
         if (we > sMin) {
           var l3 = posPct(sMin), w3 = Math.max(MINW, posPct(we) - l3);
           var s3 = Math.round((we - sMin) * 60);
-          html += '<span class="barfill in" title="' + fmtUnits(s3, true) + '" style="left:' + l3.toFixed(2) + '%;width:' + w3.toFixed(2) + '%"></span>';
+          html += '<span class="barfill in" style="left:' + l3.toFixed(2) + '%;width:' + w3.toFixed(2) + '%"></span>';
         }
         if (eMin > we) {
           var l4 = posPct(we), w4 = Math.max(MINW, posPct(eMin) - l4);
           var s4 = Math.round((eMin - we) * 60);
-          html += '<span class="barfill out" title="' + fmtUnits(s4, true) + '" style="left:' + l4.toFixed(2) + '%;width:' + w4.toFixed(2) + '%"></span>';
+          html += '<span class="barfill out" style="left:' + l4.toFixed(2) + '%;width:' + w4.toFixed(2) + '%"></span>';
         }
         continue;
       }
@@ -602,7 +602,7 @@ function barFillsHtml(frags, dayStartMs, isWeekend) {
     var rightPct = posPct(eMin);
     var widthPct = Math.max(MINW, rightPct - leftPct);
     var sec = Math.round((eMin - sMin) * 60);
-    html += '<span class="barfill ' + cls + '" title="' + fmtUnits(sec, true) + '" style="left:' + leftPct.toFixed(2) + '%;width:' + widthPct.toFixed(2) + '%"></span>';
+    html += '<span class="barfill ' + cls + '" style="left:' + leftPct.toFixed(2) + '%;width:' + widthPct.toFixed(2) + '%"></span>';
   }
   return html;
 }
@@ -752,16 +752,18 @@ function render() {
       } else {
         html += '<div class="weekrows">';
         days.forEach(function (d) {
-          html += '<div class="barrow' + (d.today ? ' today' : '') + '" title="' + d.iso + (d.sec >= 1 ? ' — ' + fmtUnits(d.sec, true) : '') + '"><span class="wd">' + d.label + '</span>' +
+          var dayTipIn = d.inSec >= 1 ? fmtUnits(d.inSec, true) : null;
+          var dayTipOut = d.outSec >= 1 ? fmtUnits(d.outSec, true) : null;
+          html += '<div class="barrow' + (d.today ? ' today' : '') + '" data-day-in="' + (dayTipIn || '') + '" data-day-out="' + (dayTipOut || '') + '"><span class="wd">' + d.label + '</span>' +
                   '<div class="bartrack">' + workdayBandHtml(d.dow) + barFillsHtml(d.frags, d.startMs, d.weekend) + '</div>' +
                   '<span class="wsec' + (d.sec < 1 ? ' zero' : '') + '">' + (d.sec >= 1 ? fmtUnits(d.sec, true) : '&mdash;') + '</span></div>';
         });
-        html += '</div><div class="hint" style="margin-top:2px">bars scaled to the busiest day &middot; green inside ' + hmStr(state.workStart) + '-' + hmStr(state.workEnd) + ' &middot; orange outside &middot; weekends always orange</div>';
+        html += '</div><div class="hint" style="margin-top:2px">workday ' + hmStr(state.workStart) + '-' + hmStr(state.workEnd) + '</div>';
         if (state.weekProjects.length) {
           html += '<div class="projlist">';
           state.weekProjects.forEach(function (p) {
             var share = state.weekTotal > 0 ? Math.round((p.sec / state.weekTotal) * 100) : 0;
-            html += '<div class="proj-row"><span class="dot"></span><span class="pname" title="' + esc(p.project) + '">' + esc(p.project) + '</span>' +
+            html += '<div class="proj-row"><span class="dot"></span><span class="pname" data-tooltip="' + esc(p.project) + '">' + esc(p.project) + '</span>' +
                     '<span class="ptime">' + fmtUnits(p.sec, true) + '</span><span class="pshare">' + share + '%</span></div>';
           });
           html += '</div>';
@@ -1066,3 +1068,76 @@ window.__debug = {
 booted = true;
 render();
 init();
+
+/* ── custom tooltips (UXP doesn't support native title tooltips) ── */
+var tooltipEl = null;
+function showTooltip(e, html) {
+  if (!tooltipEl) {
+    tooltipEl = document.createElement('div');
+    tooltipEl.className = 'tooltip';
+    document.body.appendChild(tooltipEl);
+  }
+  tooltipEl.innerHTML = html;
+  tooltipEl.style.display = 'block';
+  positionTooltip(e);
+}
+function positionTooltip(e) {
+  if (!tooltipEl) return;
+  var x = e.clientX + 10;
+  var y = e.clientY + 10;
+  // Keep tooltip in viewport
+  var rect = tooltipEl.getBoundingClientRect();
+  if (x + rect.width > window.innerWidth) x = e.clientX - rect.width - 10;
+  if (y + rect.height > window.innerHeight) y = e.clientY - rect.height - 10;
+  tooltipEl.style.left = x + 'px';
+  tooltipEl.style.top = y + 'px';
+}
+function hideTooltip() {
+  if (tooltipEl) tooltipEl.style.display = 'none';
+}
+
+// Attach tooltip handlers to all elements with data-tooltip or data-day-in/out
+function wireTooltips() {
+  if (typeof document === 'undefined' || !document.querySelectorAll) return;
+  
+  // Standard tooltips (text only)
+  var els = document.querySelectorAll('[data-tooltip]');
+  els.forEach(function (el) {
+    if (el._tooltipWired) return;
+    el._tooltipWired = true;
+    el.addEventListener('mouseenter', function (e) { showTooltip(e, el.getAttribute('data-tooltip')); });
+    el.addEventListener('mousemove', function (e) { positionTooltip(e); });
+    el.addEventListener('mouseleave', hideTooltip);
+  });
+  
+  // Day row tooltips (HTML with colors)
+  var dayRows = document.querySelectorAll('[data-day-in][data-day-out]');
+  dayRows.forEach(function (el) {
+    if (el._dayTooltipWired) return;
+    el._dayTooltipWired = true;
+    el.addEventListener('mouseenter', function (e) {
+      var inTime = el.getAttribute('data-day-in');
+      var outTime = el.getAttribute('data-day-out');
+      var html = '';
+      if (inTime && outTime) {
+        html = '<span style="color:#2ecc71">regular: ' + inTime + '</span> / <span style="color:#e09145">extra: ' + outTime + '</span>';
+      } else if (inTime) {
+        html = '<span style="color:#2ecc71">regular: ' + inTime + '</span>';
+      } else if (outTime) {
+        html = '<span style="color:#e09145">extra: ' + outTime + '</span>';
+      } else {
+        html = 'no tracked time';
+      }
+      showTooltip(e, html);
+    });
+    el.addEventListener('mousemove', function (e) { positionTooltip(e); });
+    el.addEventListener('mouseleave', hideTooltip);
+  });
+}
+
+// Call after every render
+var _origRender = render;
+render = function () {
+  _origRender();
+  wireTooltips();
+};

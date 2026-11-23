@@ -1,4 +1,4 @@
-<p align="center"><img align=center src="https://github.com/cuarentaysiete/8ras-time-tracker/blob/main/assets/icon.png"></p>p
+<p align="center"><img align=center src="https://github.com/cuarentaysiete/8ras-time-tracker/blob/main/assets/icon.png"></p>
 
 # 8ras Time Tracker
 
@@ -10,13 +10,15 @@ A lightweight, fully offline Adobe Photoshop UXP plugin that tracks active worki
 - **Automatic project grouping** by parent folder name, plus "Unsaved Documents" for unsaved canvases.
 - **Idle detection** with a configurable threshold (default: 2 minutes). Sessions are committed when no activity is detected within the threshold period.
 - **Instant commit on document switch** -- switching tabs or documents immediately commits the previous session.
-- **Working hours** (configurable in Settings, default 10:00-18:00): the weekly dashboard colour-codes every day's bar -- green time falls inside the workday window, orange time falls outside it, and Saturday/Sunday always render fully orange. Each bar is one contiguous fill scaled proportionally to that day's total tracked time; the busiest day of the week spans the full track.
-- **Weekly dashboard** ("This week" tab, toggles the whole view on/off): Monday-to-Sunday rows (Mo through Su), proportionally coloured bars per day, "Total this week -- X / Y" header (hours inside / outside the workday), per-project breakdown.
-- **Settings panel**: adjust idle threshold and working hours (start/end time), reconfigure the data folder ("Change folder..."), toggle internal log, export CSV, and reset configuration.
+- **Real-time positioned timeline** (v2.7.0+): The weekly dashboard shows a time-based track for each day. The track spans from 30 minutes before your workday start to 4 hours after your workday end. A grey band marks the workday window. Green bars show work performed inside the workday, orange bars show work performed outside it (including weekends). Bars are positioned at their actual time of day, not stacked left-to-right. Sessions that cross workday boundaries are split into in/out parts.
+- **Working hours** (configurable in Settings, default 10:00-18:00): defines the workday window used by the real-time timeline. Green time falls inside the workday, orange time falls outside it, and Saturday/Sunday always render fully orange.
+- **Custom tooltips** (v2.7.0+): Hovering over any day's bar row shows a tooltip with the day's total regular hours (green) and extra hours (orange), e.g. "regular: 8h 15m / extra: 1h 30m". UXP doesn't support native `title` tooltips, so these are implemented with a floating div.
+- **Weekly dashboard** ("This week" tab, toggles the whole view on/off): Monday-to-Sunday rows (Mo through Su), real-time positioned bars per day, "Total this week -- X / Y" header (hours inside / outside the workday), per-project breakdown.
 - **Explicit time units**: the live timer shows "1h 05m 09s" (hours, minutes, seconds). Dashboard totals use "1h 05m" / "4m" / "0m" (hours + minutes only, no seconds).
 - **CSV export**: one row per session, UTF-8 BOM included for Excel compatibility. Format: `date,project,file,session_start,session_end,seconds,active`.
 - **60-second checkpoints**: intermediate saves every minute so no work is lost if Photoshop crashes or closes unexpectedly.
 - **Persistent token**: the selected data folder is remembered between Photoshop sessions using UXP's persistent token mechanism.
+- **Settings panel**: adjust idle threshold and working hours (start/end time), reconfigure the data folder ("Change folder..."), toggle internal log, export CSV, and reset configuration.
 - **Fully offline**: no network calls, no build step, no dependencies.
 
 ## Installation
@@ -71,7 +73,7 @@ node test/smoke.cjs
 
 Covers: fresh install, folder selection + persistent token, activity tracking, idle timeout, document switching, unsaved documents, CSV export, threshold persistence, full restart restore, folder reconfiguration with data preservation, and working-hours visualisation (in/out split, persistence, weekend-always-outside rule, toggle behaviour).
 
-All 84 assertions pass across UTC, Europe/Madrid, and America/New_York timezones.
+All 85 assertions pass across UTC, Europe/Madrid, and America/New_York timezones.
 
 ## License
 

@@ -206,3 +206,11 @@ All notable changes to 8ras Time Tracker are documented here.
 - **Green/orange bars positioned by real time**: Activity bars appear at their actual time-of-day position
 - **Fragment splitting**: Sessions that cross workday boundaries are split into in/out parts
 - **No more left-aligned bars**: All elements are positioned by their actual time within the track
+
+## [2.7.1] - 2025-11-23
+
+### Changed
+- Simplified day-row tooltips: now show only "regular: X / extra: Y" with green/orange colours
+- Removed individual tooltips from bar segments (green/orange/grey)
+- Simplified hint text below timeline: now shows only "workday HH:MM-HH:MM"
+- Track margin reduced from 2h to 30 minutes before workday start
