@@ -220,3 +220,14 @@ All notable changes to 8ras Time Tracker are documented here.
 ### Changed
 - Reduced disk I/O: checkpoint interval increased from 60 seconds to 5 minutes
 - Rationale: Photoshop rarely crashes, and 5-10 min of potential data loss is acceptable
+
+## [2.8.0] - 2025-11-23
+
+### Added
+- Smart project detection with `.project-map.json` support
+  - Auto-detects projects from `YYYYMMDD-name` folder pattern in file path
+  - Supports custom project mapping via `.project-map.json` file in tracker folder
+  - Project map format: `{ "/absolute/path/to/project": "Project Name" }`
+  - Longest matching prefix wins
+  - Fallback to parent folder if no pattern/map match
+  - Project map loaded on startup and when folder is selected

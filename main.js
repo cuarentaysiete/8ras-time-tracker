@@ -228,11 +228,70 @@ function docName(doc) {
 function docPath(doc) {
   return (doc && doc.path) ? String(doc.path) : '';
 }
-function projectOf(p) {
-  if (!p) return 'Unsaved Documents';
-  var parts = p.split(/[\\/]/).filter(Boolean);
+var PROJECT_MAP_FILE = '.project-map.json';
+var projectMap = {}; // will be loaded from disk
+
+function loadProjectMap() {
+  try {
+    if (!state.folderPath) return;
+    var folder = state._folderEntry;
+    if (!folder) return;
+    var raw = folder.getEntry(PROJECT_MAP_FILE);
+    if (raw) {
+      var text = raw.read();
+      if (text) projectMap = JSON.parse(text);
+    }
+  } catch (e) {
+    log('project map load failed: ' + (e.message || e));
+  }
+}
+
+function saveProjectMap() {
+  try {
+    if (!state.folderPath) return;
+    var folder = state._folderEntry;
+    if (!folder) return;
+    var file = folder.getEntry(PROJECT_MAP_FILE) || folder.createFile(PROJECT_MAP_FILE);
+    file.write(JSON.stringify(projectMap, null, 2));
+    log('project map saved');
+  } catch (e) {
+    log('project map save failed: ' + (e.message || e));
+  }
+}
+
+function detectProjectSmart(filePath) {
+  if (!filePath) return 'Unsaved Documents';
+  
+  // 1. Check project map: find longest matching prefix
+  var bestMatch = null;
+  var bestMatchLen = 0;
+  for (var dir in projectMap) {
+    if (filePath.startsWith(dir + '/') || filePath === dir) {
+      if (dir.length > bestMatchLen) {
+        bestMatch = projectMap[dir];
+        bestMatchLen = dir.length;
+      }
+    }
+  }
+  if (bestMatch) return bestMatch;
+  
+  // 2. Auto-detect YYYYMMDD-* pattern
+  var parts = filePath.split(/[\\/]/).filter(Boolean);
+  for (var i = parts.length - 2; i >= 0; i--) {
+    if (/^\d{8}-.+/.test(parts[i])) {
+      // Found a date-prefixed folder, use it as project
+      var projName = parts[i].replace(/^\d{8}-/, ''); // Remove date prefix
+      return projName;
+    }
+  }
+  
+  // 3. Fallback: parent folder (current behavior)
   if (parts.length >= 2) return parts[parts.length - 2];
   return 'Unsaved Documents';
+}
+
+function projectOf(p) {
+  return detectProjectSmart(p);
 }
 
 function pad2(n) { return (n < 10 ? '0' : '') + n; }
@@ -835,7 +894,11 @@ async function configure() {
     var f = await localFs.getFolder();
     if (!f) { log('folder selection: cancelled'); render(); return; }
     folder = f;
+    state._folderEntry = f; // store for project map
     state.folderPath = folderLabel(f);
+    
+    // Load project map
+    loadProjectMap();
 
     /* restore previous settings (threshold, working hours) before overwriting */
     try { applyTokenMeta(JSON.parse(await readTextFile(f, TOKEN_FILE))); } catch (e) {}
@@ -955,8 +1018,13 @@ async function init() {
         if (!entry) throw new Error('token resolved to nothing');
         folder = entry;
         state.folderPath = folderLabel(entry);
+        state._folderEntry = entry; // store for project map
         var metaRaw = await readTextFile(folder, TOKEN_FILE);
         if (metaRaw) { try { applyTokenMeta(JSON.parse(metaRaw)); } catch (e) {} }
+        
+        // Load project map
+        loadProjectMap();
+        
         var raw = await readTextFile(folder, METRICS_FILE);
         if (raw) {
           try { metrics = JSON.parse(raw); if (!metrics.projects) metrics = emptyMetrics(); log('restored metrics from disk'); }

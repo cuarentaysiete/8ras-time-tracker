@@ -251,7 +251,7 @@ console.log('\n== 8ras Time Tracker — smoke test ==\n');
   assert(appEl.innerHTML.includes('Total this week') && appEl.innerHTML.includes('<span class="ttotal">') && appEl.innerHTML.includes('<span class="tin">') && appEl.innerHTML.includes('<span class="tout">'),
          '"Total this week" shows total + in/out colour spans');
   assert(appEl.innerHTML.includes('class="band"'), 'weekday rows show the grey workday band');
-  assert(appEl.innerHTML.includes('green inside 10:00-18:00'), 'bar caption explains axis and colours');
+  assert(appEl.innerHTML.includes('workday 10:00-18:00'), 'bar caption shows workday hours');
   /* big timer = cumulative TODAY for the current file (committed + in-flight) */
   const tSec = dbg.fileTodaySec();
   assert(tSec >= 120, 'fileTodaySec() includes committed time for the current file (' + tSec + 's)');
@@ -390,7 +390,7 @@ console.log('\n== 8ras Time Tracker — smoke test ==\n');
   assert(dbg2.state().workStart === 540 && dbg2.state().workEnd === 1020, 'working hours applied from settings (09:00-17:00)');
   const tok10 = JSON.parse(folderData['.tracker-token.json']);
   assert(tok10.workStartMin === 540 && tok10.workEndMin === 1020, 'working hours persisted in the token file');
-  assert(appEl.innerHTML.includes('green inside 09:00-17:00'), 'caption reflects the new workday');
+  assert(appEl.innerHTML.includes('workday 09:00-17:00'), 'caption reflects the new workday');
 
   const hm = m => String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');
 
