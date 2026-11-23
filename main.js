@@ -279,9 +279,8 @@ function detectProjectSmart(filePath) {
   var parts = filePath.split(/[\\/]/).filter(Boolean);
   for (var i = parts.length - 2; i >= 0; i--) {
     if (/^\d{8}-.+/.test(parts[i])) {
-      // Found a date-prefixed folder, use it as project
-      var projName = parts[i].replace(/^\d{8}-/, ''); // Remove date prefix
-      return projName;
+      // Found a date-prefixed folder, use the FULL folder name as project
+      return parts[i];
     }
   }
   
