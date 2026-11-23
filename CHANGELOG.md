@@ -2,6 +2,13 @@
 
 All notable changes to 8ras Time Tracker are documented here.
 
+## [2.6.4] - 2025-11-22
+
+### Fixed
+- **Log scroll now preserves position**: added `saveLogScroll()` / `restoreLogScroll()` to save and restore the scroll position of the log box across re-renders. This fixes the "scroll jumps to top" bug.
+- **Buttons more reliable**: added `user-select:none` to prevent text selection on double-click, and ensured `event.stopPropagation()` is used in all button handlers.
+- **Fixed test environment compatibility**: `saveLogScroll()` / `restoreLogScroll()` now wrap `document.querySelector` in try/catch, so they don't crash in test environments where `document` is mocked.
+
 ## [2.6.3] - 2025-11-22
 
 ### Fixed

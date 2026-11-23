@@ -96,6 +96,7 @@ body {
 .btn {
   background:#2a2d45; border:1px solid rgba(255,255,255,.08); border-radius:4px;
   color:#e8e8ec; font-size:10px; font-weight:600; padding:6px 10px; cursor:pointer;
+  user-select:none; -webkit-user-select:none;
 }
 .btn:hover { background:#343856 }
 .btn.active { background:#3a3d55; border-color:rgba(255,255,255,.25); box-shadow:0 0 0 1px rgba(74,144,217,.3) }

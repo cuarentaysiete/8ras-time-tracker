@@ -1,7 +1,7 @@
 'use strict';
 
 /* ════════════════════════════════════════════════════════════════════
-   8ras Time Tracker — v2.6.3
+   8ras Time Tracker — v2.6.4
    Adobe Photoshop UXP panel plugin. Classic script (NO ES modules).
 
    All UXP API calls verified against the official reference
@@ -14,10 +14,10 @@
      file.read()                            → string (utf8 default)
      file.write(data[, {append}])           → replaces unless append
    ══════════════════════════════════════════════════════════════════ */
-console.log('[8ras v2.6.3] main.js loaded');
+console.log('[8ras v2.6.4] main.js loaded');
 
 var NAME = '8ras time tracker';
-var VERSION = '2.6.3';
+var VERSION = '2.6.4';
 var TOKEN_KEY = 'eighras-tracker-token';   // persistent-token key in storage.local
 var TOKEN_FILE = '.tracker-token.json';    // human-readable marker inside the data folder
 var METRICS_FILE = 'metrics.json';
@@ -661,6 +661,7 @@ function logHtml() {
 }
 
 function render() {
+  saveLogScroll();
   var el = $('app');
   if (!el) return;
   var html = '';
@@ -741,6 +742,22 @@ function render() {
   }
   el.innerHTML = html;
   wire(el);
+  restoreLogScroll();
+}
+
+/* Save/restore log scroll position across re-renders */
+var _logScrollTop = 0;
+function saveLogScroll() {
+  try {
+    var box = document.querySelector('.logbox');
+    if (box) _logScrollTop = box.scrollTop;
+  } catch (e) { /* document.querySelector not available */ }
+}
+function restoreLogScroll() {
+  try {
+    var box = document.querySelector('.logbox');
+    if (box) box.scrollTop = _logScrollTop;
+  } catch (e) { /* document.querySelector not available */ }
 }
 
 /* UXP forbids inline onclick handlers in innerHTML-injected markup: bind via addEventListener */
