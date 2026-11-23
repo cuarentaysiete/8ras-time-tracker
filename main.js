@@ -1,7 +1,7 @@
 'use strict';
 
 /* ════════════════════════════════════════════════════════════════════
-   8ras Time Tracker — v2.6.2
+   8ras Time Tracker — v2.6.3
    Adobe Photoshop UXP panel plugin. Classic script (NO ES modules).
 
    All UXP API calls verified against the official reference
@@ -14,10 +14,10 @@
      file.read()                            → string (utf8 default)
      file.write(data[, {append}])           → replaces unless append
    ══════════════════════════════════════════════════════════════════ */
-console.log('[8ras v2.6.2] main.js loaded');
+console.log('[8ras v2.6.3] main.js loaded');
 
 var NAME = '8ras time tracker';
-var VERSION = '2.6.2';
+var VERSION = '2.6.3';
 var TOKEN_KEY = 'eighras-tracker-token';   // persistent-token key in storage.local
 var TOKEN_FILE = '.tracker-token.json';    // human-readable marker inside the data folder
 var METRICS_FILE = 'metrics.json';
@@ -702,7 +702,7 @@ function render() {
               '<button class="btn primary" data-action="configure">Change folder&hellip;</button>' +
               '</div>' +
               '<div class="btnrow">' +
-              '<button class="btn" data-action="toggleLog">' + (state.showLogs ? 'Hide log' : 'Show log') + '</button>' +
+              '<button class="btn' + (state.showLogs ? ' active' : '') + '" data-action="toggleLog">' + (state.showLogs ? 'Hide log' : 'Show log') + '</button>' +
               '<button class="btn danger" data-action="resetConfig">Reset config</button>' +
               '</div>' +
               '<div class="hint">data folder: ' + esc(state.folderPath || '?') + '</div>' +
@@ -750,7 +750,7 @@ function wire(el) {
     nodes = el.querySelectorAll('[data-action]');
     for (i = 0; i < nodes.length; i++) {
       (function (a) {
-        nodes[i].addEventListener('click', function () { window.__action(a); });
+        nodes[i].addEventListener('click', function (ev) { ev.stopPropagation(); window.__action(a); });
       })(nodes[i].getAttribute('data-action'));
     }
     nodes = el.querySelectorAll('[data-change]');

@@ -2,6 +2,13 @@
 
 All notable changes to 8ras Time Tracker are documented here.
 
+## [2.6.3] - 2025-11-22
+
+### Fixed
+- **Log scroll now works**: changed `max-height:120px` to `height:120px` in `.logbox`, so the scroll bar appears and works correctly when the log is long.
+- **Active button state**: added `.btn.active` class to buttons that are "on" (e.g., the LOG button when logs are visible). The active button now has a distinct visual style (lighter background, blue border glow).
+- **Button click reliability**: added `event.stopPropagation()` to button click handlers, so clicks don't bubble up and trigger unintended actions. This should fix the "double-click" issue.
+
 ## [2.6.2] - 2025-11-22
 
 ### Fixed
