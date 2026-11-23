@@ -42,9 +42,11 @@ body {
   flex:1; padding:5px 0; text-align:center; font-size:10px; font-weight:600;
   background:#1c1e2e; border:1px solid rgba(255,255,255,.07); border-radius:5px;
   color:#8a8fa3; cursor:pointer;
+  user-select:none; -webkit-user-select:none;
 }
-.tab.on { background:#2a2d45; color:#fff; border-color:rgba(255,255,255,.14) }
+.tab.on { background:#3a3d55; color:#fff; border-color:rgba(74,144,217,.6); box-shadow:0 0 0 1px rgba(74,144,217,.25) }
 .tab:focus { outline:none }
+.tab:hover { background:#2a2d45; color:#c3c7de }
 
 /* weekly view */
 .week h3 { font-size:11px; font-weight:700; color:#c3c7de; margin-bottom:8px }

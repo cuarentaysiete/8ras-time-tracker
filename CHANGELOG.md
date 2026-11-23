@@ -2,6 +2,15 @@
 
 All notable changes to 8ras Time Tracker are documented here.
 
+## [2.6.5] - 2025-11-22
+
+### Added
+- **Clear log button**: added a "Clear log" button in Settings that clears all log entries.
+- **Improved tab visual state**: the "This week" and "Settings" tabs now have a much more distinct active state (blue border glow, lighter background) so it's clear which tab is currently showing.
+
+### Fixed
+- **Button click reliability**: added `user-select:none` to tabs to prevent text selection on double-click.
+
 ## [2.6.4] - 2025-11-22
 
 ### Fixed
