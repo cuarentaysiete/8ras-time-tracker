@@ -58,8 +58,8 @@ body {
 .barrow { display:flex; align-items:center; gap:10px; margin-bottom:4px }
 .wd { width:22px; flex:none; text-align:left; font-size:9px; color:#8e8e9e }
 .bartrack { position:relative; flex:1; height:10px; background:#272732; border-radius:5px; overflow:hidden }
-.band { position:absolute; top:0; bottom:0; background:#565656; border-radius:2px }
-.barfill { position:absolute; top:0; bottom:0; border-radius:2px }
+.band { position:absolute; top:0; bottom:0; background:#565656 }
+.barfill { position:absolute; top:0; bottom:0 }
 .barfill.in { background:#2ecc71 }
 .barfill.out { background:#e09145 }
 .barrow.today .wd { color:#4a80f0; font-weight:700 }
