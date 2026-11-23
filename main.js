@@ -21,7 +21,7 @@ var VERSION = '2.7.0';
 var TOKEN_KEY = 'eighras-tracker-token';   // persistent-token key in storage.local
 var TOKEN_FILE = '.tracker-token.json';    // human-readable marker inside the data folder
 var METRICS_FILE = 'metrics.json';
-var CHECKPOINT_MS = 60 * 1000;
+var CHECKPOINT_MS = 5 * 60 * 1000; // 5 minutes
 var PS_IDLE_EVENT_SEC = 20;    /* Photoshop's own idle clock for the resume watcher */
 
 var state = {

@@ -214,3 +214,9 @@ All notable changes to 8ras Time Tracker are documented here.
 - Removed individual tooltips from bar segments (green/orange/grey)
 - Simplified hint text below timeline: now shows only "workday HH:MM-HH:MM"
 - Track margin reduced from 2h to 30 minutes before workday start
+
+## [2.7.2] - 2025-11-23
+
+### Changed
+- Reduced disk I/O: checkpoint interval increased from 60 seconds to 5 minutes
+- Rationale: Photoshop rarely crashes, and 5-10 min of potential data loss is acceptable
