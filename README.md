@@ -2,7 +2,7 @@
 
 # 8ras Time Tracker
 
-A lightweight, fully offline Adobe Photoshop UXP plugin that tracks active working time per project and file, stores all data locally in a single `metrics.json`, and provides a dockable panel with a live timer, weekly dashboard, settings, and CSV export.
+A lightweight, offline Adobe Photoshop UXP plugin that tracks active working time per project and file, stores all data locally in a single `metrics.json`, and provides a dockable panel with a live timer, weekly dashboard, settings, and CSV export.
 
 ## Features
 
@@ -24,16 +24,12 @@ A lightweight, fully offline Adobe Photoshop UXP plugin that tracks active worki
 ## Screenshots
 
 ### Live Tracking
-<p align="center"><img src="screenshots/tracking.gif" alt="Live tracking animation" width="600"></p>
+<p align="center"><img src="screenshots/tracking.gif" alt="Live tracking animation" width="400"></p>
 
-### Dashboard (This Week)
-<p align="center"><img src="screenshots/screenshot1-dashboard.png" alt="Dashboard view" width="600"></p>
-
-### Settings
-<p align="center"><img src="screenshots/screenshot2-settings.png" alt="Settings view" width="600"></p>
-
-### Internal Log
-<p align="center"><img src="screenshots/screenshot3-log.png" alt="Internal Log view" width="600"></p>
+<p align="center">
+  <img src="screenshots/screenshot1-dashboard.png" alt="Dashboard view" width="400">
+  <img src="screenshots/screenshot3-log.png" alt="Settings view" width="400">
+</p>
 
 ## Installation
 
