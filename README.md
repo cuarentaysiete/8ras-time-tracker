@@ -21,6 +21,17 @@ A lightweight, fully offline Adobe Photoshop UXP plugin that tracks active worki
 - **Settings panel**: adjust idle threshold and working hours (start/end time), reconfigure the data folder ("Change folder..."), toggle internal log, export CSV, and reset configuration.
 - **Fully offline**: no network calls, no build step, no dependencies.
 
+## Screenshots
+
+### Dashboard (This Week)
+<p align="center"><img src="screenshots/screenshot1-dashboard.png" alt="Dashboard view" width="600"></p>
+
+### Settings
+<p align="center"><img src="screenshots/screenshot2-settings.png" alt="Settings view" width="600"></p>
+
+### Internal Log
+<p align="center"><img src="screenshots/screenshot3-log.png" alt="Internal Log view" width="600"></p>
+
 ## Installation
 
 1. Install Photoshop 23.0.0 or later along with UDT (UXP Developer Tools).
