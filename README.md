@@ -23,6 +23,9 @@ A lightweight, fully offline Adobe Photoshop UXP plugin that tracks active worki
 
 ## Screenshots
 
+### Live Tracking
+<p align="center"><img src="screenshots/tracking.gif" alt="Live tracking animation" width="600"></p>
+
 ### Dashboard (This Week)
 <p align="center"><img src="screenshots/screenshot1-dashboard.png" alt="Dashboard view" width="600"></p>
 
