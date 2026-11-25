@@ -1,5 +1,3 @@
-<p align="center"><img align=center src="https://github.com/cuarentaysiete/8ras-time-tracker/blob/main/assets/icon.png"></p>
-
 # 8ras Time Tracker
 
 A lightweight, offline Adobe Photoshop UXP plugin that tracks active working time per project and file, stores all data locally in a single `metrics.json`, and provides a dockable panel with a live timer, weekly dashboard, settings, and CSV export.
